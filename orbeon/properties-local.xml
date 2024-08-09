@@ -1,0 +1,42 @@
+<!--
+    This file is an empty template for your own `properties-local.xml` file.
+    Please follow the instructions linked below:
+
+    https://doc.orbeon.com/configuration/properties
+-->
+<properties
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:oxf="http://www.orbeon.com/oxf/processors"
+        xmlns:fr="http://orbeon.org/oxf/xml/form-runner"
+        xmlns:xxf="http://orbeon.org/oxf/xml/xforms"
+>
+    <property
+            as="xs:string"
+            name="oxf.crypto.password"
+            value="!5vYzB$7LwXr@d3Q"
+    />
+
+    <property
+            as="xs:string"
+            name="oxf.fr.access-token.password"
+            value="9Xg$D3e@F1s!yR2v"
+    />
+
+    <property
+            as="xs:string"
+            name="oxf.fr.field-encryption.password"
+            value="J2m#E4@x6F$Np9b"
+    />
+
+    <property
+            as="xs:string"
+            name="oxf.fr.persistence.provider.*.*.*"
+            value="postgresql"
+    />
+
+    <property
+            as="xs:boolean"
+            name="oxf.fr.persistence.sqlite.active"
+            value="false"
+    />
+</properties>

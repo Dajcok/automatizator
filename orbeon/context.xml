@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+
+    <!-- Link to the global PostgreSQL Data Source -->
+    <ResourceLink
+            name="jdbc/postgresql"
+            global="jdbc/postgresql"
+            auth="Container"
+            type="javax.sql.DataSource"/>
+
+    <!-- Any other context-specific configurations -->
+</Context>
