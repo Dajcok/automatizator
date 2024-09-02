@@ -29,11 +29,13 @@ services:
     image: postgres:latest
     environment:
       - POSTGRES_DB=orbeon
-      - POSTGRES_USER=orbeon_user
+      - POSTGRES_USER=orbeon
       - POSTGRES_PASSWORD=orbeon_password
     volumes:
       - postgres_orbeon_data:/var/lib/postgresql/data
       - ./orbeon/ddl.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5431:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U orbeon_user -d orbeon" ]
       interval: 10s
@@ -88,9 +90,25 @@ services:
       postgres_orbeon:
         condition: service_healthy
 
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres_n8n
+      - postgres_docassemble
+      - postgres_orbeon
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+
 volumes:
   postgres_n8n_data:
   postgres_docassemble_data:
   postgres_orbeon_data:
   docassemble_data:
   n8n_data:
+  pgadmin_data:

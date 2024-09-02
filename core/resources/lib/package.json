@@ -1,0 +1,22 @@
+{
+    "name": "lib",
+    "version": "1.0.0",
+    "description": "Package containing client side logic for interacting with core service",
+    "main": "dist/index.js",
+    "author": "Daniel Klimek",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^22.4.1",
+        "typescript": "^5.5.4",
+        "vite": "^5.4.1"
+    },
+    "scripts": {
+        "build:ts": "tsc",
+        "build:vite": "vite build",
+        "build": "yarn build:ts && yarn build:vite"
+    },
+    "dependencies": {
+        "axios": "^1.7.4",
+        "dotenv": "^16.4.5"
+    }
+}
