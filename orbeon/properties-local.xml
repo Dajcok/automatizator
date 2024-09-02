@@ -39,4 +39,16 @@
             name="oxf.fr.persistence.sqlite.active"
             value="false"
     />
+
+    <property
+            as="xs:string"
+            name="oxf.fr.authentication.method"
+            value="header"
+    />
+
+    <property
+            as="xs:string"
+            name="oxf.fr.authentication.header.credentials"
+            value="Orbeon-Credentials"
+    />
 </properties>

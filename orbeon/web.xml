@@ -239,48 +239,46 @@
     <!-- End relational persistence, and change oracle if necessary -->
     <!-- Form Runner authentication -->
     <!-- Require the security role on /fr/auth by default. To protect everything this must be changed. -->
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Form Runner</web-resource-name>
-            <url-pattern>/fr/auth</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>orbeon-user</role-name>
-        </auth-constraint>
-    </security-constraint>
+<!--    <security-constraint>-->
+<!--        <web-resource-collection>-->
+<!--            <web-resource-name>Form Runner</web-resource-name>-->
+<!--            <url-pattern>/fr/auth</url-pattern>-->
+<!--        </web-resource-collection>-->
+<!--        <auth-constraint>-->
+<!--            <role-name>orbeon-user</role-name>-->
+<!--        </auth-constraint>-->
+<!--    </security-constraint>-->
     <!-- The following pages and services are allowed without constraints by default -->
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Form Runner services and public pages and resources</web-resource-name>
-            <url-pattern>/fr/service/*</url-pattern>
-            <url-pattern>/fr/style/*</url-pattern>
-            <url-pattern>/fr/not-found</url-pattern>
-            <url-pattern>/fr/error</url-pattern>
-            <url-pattern>/fr/login</url-pattern>
-            <url-pattern>/fr/login-error</url-pattern>
-        </web-resource-collection>
-    </security-constraint>
+<!--    <security-constraint>-->
+<!--        <web-resource-collection>-->
+<!--            <web-resource-name>Form Runner services and public pages and resources</web-resource-name>-->
+<!--            <url-pattern>/fr/service/*</url-pattern>-->
+<!--            <url-pattern>/fr/style/*</url-pattern>-->
+<!--            <url-pattern>/fr/not-found</url-pattern>-->
+<!--            <url-pattern>/fr/error</url-pattern>-->
+<!--            <url-pattern>/fr/login</url-pattern>-->
+<!--            <url-pattern>/fr/login-error</url-pattern>-->
+<!--        </web-resource-collection>-->
+<!--    </security-constraint>-->
     <!-- This will cause redirect from HTTP to HTTPS but not for eXist -->
-    <!--
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Entire Application</web-resource-name>
-            <url-pattern>/*</url-pattern>
-        </web-resource-collection>
-        <user-data-constraint>
-            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
-        </user-data-constraint>
-    </security-constraint>
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>eXist</web-resource-name>
-            <url-pattern>/exist/*</url-pattern>
-        </web-resource-collection>
-        <user-data-constraint>
-            <transport-guarantee>NONE</transport-guarantee>
-        </user-data-constraint>
-    </security-constraint>
-    -->
+<!--    <security-constraint>-->
+<!--        <web-resource-collection>-->
+<!--            <web-resource-name>Entire Application</web-resource-name>-->
+<!--            <url-pattern>/*</url-pattern>-->
+<!--        </web-resource-collection>-->
+<!--        <user-data-constraint>-->
+<!--            <transport-guarantee>CONFIDENTIAL</transport-guarantee>-->
+<!--        </user-data-constraint>-->
+<!--    </security-constraint>-->
+<!--    <security-constraint>-->
+<!--        <web-resource-collection>-->
+<!--            <web-resource-name>eXist</web-resource-name>-->
+<!--            <url-pattern>/exist/*</url-pattern>-->
+<!--        </web-resource-collection>-->
+<!--        <user-data-constraint>-->
+<!--            <transport-guarantee>NONE</transport-guarantee>-->
+<!--        </user-data-constraint>-->
+<!--    </security-constraint>-->
     <!-- Use the form-based method by default -->
     <login-config>
         <auth-method>FORM</auth-method>
