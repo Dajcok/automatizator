@@ -1,7 +1,7 @@
-import {FormRenderer} from "./form_renderer";
+import {FormRenderer} from "./src/form_renderer";
 import axios from "axios";
-import {FetchListener} from "./fetch_listener";
-import {loadStyle} from "./loader";
+import {FetchListener} from "./src/utils/fetch_listener";
+import {loadStyle} from "./src/utils/loader";
 
 const CORE_URL = "http://localhost:8000";
 
@@ -25,3 +25,4 @@ window.formRenderer = new FormRenderer(
         withCredentials: true,
     }),
 );
+

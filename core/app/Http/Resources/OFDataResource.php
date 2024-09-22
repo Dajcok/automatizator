@@ -7,6 +7,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class OFDataResource extends JsonResource
 {
+    public function __construct()
+    {
+        parent::__construct(null);
+    }
+
     /**
      * Transform the resource into an array.
      *

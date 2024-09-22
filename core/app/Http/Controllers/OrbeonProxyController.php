@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Services\OrbeonException;
 use App\Services\OrbeonServiceContract;
 
+/**
+ * This controller works purely as a proxy to the Orbeon API.
+ * It is used to bypass CORS restrictions and unify the API under a single domain.
+ */
 class OrbeonProxyController extends Controller
 {
     public function __construct(

@@ -1,3 +1,13 @@
 .orbeon .navbar {
     display: none;
 }
+
+.fr-save-final-button button {
+    background-color: #007bff!important;
+    color: white!important;
+}
+
+.fr-clear-button button {
+    background-color: #dc3545!important;
+    color: white!important;
+}

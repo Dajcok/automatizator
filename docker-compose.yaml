@@ -29,7 +29,7 @@ services:
     image: postgres:latest
     environment:
       - POSTGRES_DB=orbeon
-      - POSTGRES_USER=orbeon
+      - POSTGRES_USER=orbeon #orbeon_user
       - POSTGRES_PASSWORD=orbeon_password
     volumes:
       - postgres_orbeon_data:/var/lib/postgresql/data

@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { translate } from "./translate";
 export class FormRenderer {
     constructor(axios) {
         this.axios = axios;
@@ -91,6 +92,9 @@ export class FormRenderer {
                 headers: {
                     'Content-Type': 'application/json',
                 }
+            }).catch(e => {
+                console.error('Error fetching form', e);
+                throw e;
             });
             const { html, scriptEls, linkEls } = this.processFormHTML(response.data);
             try {
@@ -104,6 +108,9 @@ export class FormRenderer {
             container.classList.add('xforms-disable-alert-as-tooltip');
             container.classList.add('yui-skin-sam');
             container.innerHTML = html;
+            requestAnimationFrame(() => {
+                translate();
+            });
         });
     }
 }

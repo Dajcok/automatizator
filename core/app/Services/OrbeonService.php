@@ -116,7 +116,11 @@ readonly class OrbeonService implements OrbeonServiceContract
             ]);
 
             $htmlProcessor = new HTMLProcessor($response->getBody()->getContents());
+
             $htmlProcessor->removeElementsByClassName('fr-orbeon-version');
+            $htmlProcessor->removeElementsByClassName('fr-pdf-button');
+            $htmlProcessor->removeElementsByClassName('fr-review-button');
+            $htmlProcessor->removeElementsByClassName('fr-summary-button');
 
             return [
                 'html' => $htmlProcessor->getHTML(),

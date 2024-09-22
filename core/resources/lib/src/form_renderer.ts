@@ -1,4 +1,5 @@
 import {AxiosInstance} from "axios";
+import {translate} from "./translate";
 
 export class FormRenderer {
     constructor(
@@ -52,7 +53,7 @@ export class FormRenderer {
 
         const rootFormEl = doc.getElementById('xforms-form');
 
-        if(!rootFormEl) {
+        if (!rootFormEl) {
             throw new Error('Root form element not found');
         }
 
@@ -102,6 +103,9 @@ export class FormRenderer {
             headers: {
                 'Content-Type': 'application/json',
             }
+        }).catch(e => {
+            console.error('Error fetching form', e);
+            throw e;
         });
 
         const {html, scriptEls, linkEls} = this.processFormHTML(response.data);
@@ -118,6 +122,9 @@ export class FormRenderer {
         container.classList.add('yui-skin-sam');
 
         container.innerHTML = html;
-    }
 
+        requestAnimationFrame(() => {
+            translate();
+        });
+    }
 }

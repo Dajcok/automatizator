@@ -29,6 +29,11 @@ abstract class Repository
         return $this->model->paginate();
     }
 
+    public function query(array $query)
+    {
+        return $this->model->where($query)->get();
+    }
+
     public function find(int $id): Model
     {
         return $this->model->findOrFail($id);

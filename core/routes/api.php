@@ -14,6 +14,7 @@ Route::prefix('api/of')->group(function () {
 
     Route::prefix('data')->group(function () {
         Route::put('/{app}/{form}/{document}', [OFDataController::class, 'save']);
+        Route::get('/{app}/{form}', [OFDataController::class, 'index']);
     });
 });
 
