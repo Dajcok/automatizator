@@ -23,7 +23,7 @@ interface OrbeonServiceContract
 }
 
 /**
- * Class OrbeonService
+ * Class Orbeon_service
  *
  * This class is responsible for interacting with the Orbeon Forms API.
  */

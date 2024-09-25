@@ -7,9 +7,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class OFDefinitionResource extends JsonResource
 {
-    public function __construct()
+    public function __construct($resource = null)
     {
-        parent::__construct(null);
+        parent::__construct($resource);
     }
 
     /**
@@ -19,6 +19,10 @@ class OFDefinitionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'app' => $this->resource->app,
+            'form' => $this->resource->form,
+            'form_version' => $this->resource->form_version,
+        ];
     }
 }

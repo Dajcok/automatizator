@@ -19,7 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(OFDefinitionResource::class);
         $this->app->bind(OrbeonServiceContract::class, OrbeonService::class);
 
         $baseUrl = env('ORBEON_BASE_URL', 'http://localhost:8080');

@@ -12,9 +12,11 @@ use SimpleXMLElement;
 class OFFormSerializer
 {
     /**
+     * Serializes XML form definition to JSON
+     *
      * @throws Exception
      */
-    static function serializeControls(string $xmlString): array
+    static function fromXmlToJsonControls(string $xmlString): array
     {
         $resources = OFFormSerializer::createSimpleXMLInstance($xmlString)->xpath('//resource');
 
@@ -47,9 +49,11 @@ class OFFormSerializer
     }
 
     /**
+     * Serializes XML form data to JSON
+     *
      * @throws Exception
      */
-    static function serialize(string $xmlString): array
+    static function fromXmlToJsonData(string $xmlString): array
     {
         $result = [];
 
@@ -70,5 +74,32 @@ class OFFormSerializer
                 $result[(string)$key] = (string)$value;
             }
         }
+    }
+
+    /**
+     * Serializes JSON form data with added definition to quickly map the data with controls to XML
+     *
+     * @param array $json
+     * @return bool|string
+     */
+    static function fromJsonToXmlDataWithControls(array $json): bool|string
+    {
+        function arrayToXml($data, $xml_data): void
+        {
+            foreach ($data as $key => $value) {
+                if (is_array($value)) {
+                    $subnode = $xml_data->addChild("item");
+                    arrayToXml($value, $subnode);
+                } else {
+                    $xml_data->addChild("$key", htmlspecialchars("$value"));
+                }
+            }
+        }
+
+        $xmlData = new SimpleXMLElement('<?xml version="1.0"?><data></data>');
+
+        arrayToXml($json, $xmlData);
+
+        return $xmlData->asXML();
     }
 }

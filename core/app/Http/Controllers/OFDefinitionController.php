@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\BaseCollection;
+use App\Http\Resources\OFDefinitionCollection;
 use App\Http\Resources\OFDefinitionResource;
 use App\Models\OrbeonFormDefinition;
 use App\Repositories\OFDefinitionRepository;
@@ -10,13 +10,15 @@ use App\Services\OrbeonServiceContract;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Response;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class OFDefinitionController extends ResourceController
 {
     public function __construct(
         OFDefinitionRepository                 $repository,
         OFDefinitionResource                   $resource,
-        BaseCollection                         $collection,
+        OFDefinitionCollection                 $collection,
         private readonly OrbeonServiceContract $service
     )
     {
@@ -49,5 +51,16 @@ class OFDefinitionController extends ResourceController
         }
 
         return $response;
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $app = $request->route("app");
+
+        $definitions = $this->repository->query([
+            "app" => $app,
+        ]);
+
+        return response()->json(new OFDefinitionCollection($definitions));
     }
 }

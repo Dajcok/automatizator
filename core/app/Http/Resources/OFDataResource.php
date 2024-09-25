@@ -7,9 +7,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class OFDataResource extends JsonResource
 {
-    public function __construct()
+    public function __construct($request = null)
     {
-        parent::__construct(null);
+        parent::__construct($request);
     }
 
     /**

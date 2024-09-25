@@ -4,6 +4,7 @@ import {translate} from "./translate";
 export class FormRenderer {
     constructor(
         private readonly axios: AxiosInstance,
+        private readonly proxyUrl: string,
     ) {
         if (!axios.defaults.baseURL) {
             throw new Error('axios baseURL is not defined');
@@ -23,11 +24,16 @@ export class FormRenderer {
         scriptEls: HTMLScriptElement[],
         linkEls: HTMLLinkElement[]
     } {
-        const appendWithBaseUrl = (originalUrl: string) => {
+        const appendWithProxyUrl = (originalUrl: string) => {
             if (originalUrl.startsWith('file://')) {
                 originalUrl = originalUrl.substring(7);
             }
-            return this.axios.defaults.baseURL + originalUrl;
+
+            if (!this.proxyUrl) {
+                return this.axios.defaults.baseURL + originalUrl;
+            }
+
+            return this.proxyUrl + originalUrl;
         };
 
         const parser = new DOMParser();
@@ -38,17 +44,17 @@ export class FormRenderer {
         const imgEls = Array.from(doc.querySelectorAll('img[src]')) as HTMLImageElement[];
 
         scriptEls.forEach(el => {
-            el.src = appendWithBaseUrl(el.src);
+            el.src = appendWithProxyUrl(el.src);
             el.remove();
         });
 
         linkEls.forEach(el => {
-            el.href = appendWithBaseUrl(el.href);
+            el.href = appendWithProxyUrl(el.href);
             el.remove();
         });
 
         imgEls.forEach(el => {
-            el.src = appendWithBaseUrl(el.src);
+            el.src = appendWithProxyUrl(el.src);
         });
 
         const rootFormEl = doc.getElementById('xforms-form');

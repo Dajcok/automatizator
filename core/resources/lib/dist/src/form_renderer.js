@@ -9,8 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { translate } from "./translate";
 export class FormRenderer {
-    constructor(axios) {
+    constructor(axios, proxyUrl) {
         this.axios = axios;
+        this.proxyUrl = proxyUrl;
         if (!axios.defaults.baseURL) {
             throw new Error('axios baseURL is not defined');
         }
@@ -24,11 +25,14 @@ export class FormRenderer {
      * @private
      */
     processFormHTML(html) {
-        const appendWithBaseUrl = (originalUrl) => {
+        const appendWithProxyUrl = (originalUrl) => {
             if (originalUrl.startsWith('file://')) {
                 originalUrl = originalUrl.substring(7);
             }
-            return this.axios.defaults.baseURL + originalUrl;
+            if (!this.proxyUrl) {
+                return this.axios.defaults.baseURL + originalUrl;
+            }
+            return this.proxyUrl + originalUrl;
         };
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -36,15 +40,15 @@ export class FormRenderer {
         const linkEls = Array.from(doc.querySelectorAll('link[href]'));
         const imgEls = Array.from(doc.querySelectorAll('img[src]'));
         scriptEls.forEach(el => {
-            el.src = appendWithBaseUrl(el.src);
+            el.src = appendWithProxyUrl(el.src);
             el.remove();
         });
         linkEls.forEach(el => {
-            el.href = appendWithBaseUrl(el.href);
+            el.href = appendWithProxyUrl(el.href);
             el.remove();
         });
         imgEls.forEach(el => {
-            el.src = appendWithBaseUrl(el.src);
+            el.src = appendWithProxyUrl(el.src);
         });
         const rootFormEl = doc.getElementById('xforms-form');
         if (!rootFormEl) {

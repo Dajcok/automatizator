@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\BaseCollection;
+use App\Http\Resources\OFDataCollection;
 use App\Http\Resources\OFDataResource;
 use App\Models\OrbeonFormDefinition;
 use App\Repositories\OFDataRepository;
@@ -16,7 +17,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class OFDataController
@@ -49,8 +49,10 @@ class OFDataController extends ResourceController
      *
      * @throws Exception
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): Response|JsonResponse
     {
+        $responseInXml = $request->headers->get("user-agent") === "OrbeonForms";
+
         [$app, $form] = [$request->route("app"), $request->route("form")];
         //Used to query both orbeon_form_data and orbeon_form_definition tables
         $where = [
@@ -64,7 +66,7 @@ class OFDataController extends ResourceController
             return response()->json([]);
         }
 
-        $serializedDefinition = OFFormSerializer::serializeControls($definition->xml);
+        $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
 
         $results = $this->repository->query($where);
 
@@ -72,10 +74,10 @@ class OFDataController extends ResourceController
             return response()->json([]);
         }
 
-        $serialized = [];
+        $jsonSerialized = [];
 
         foreach ($results as $result) {
-            $res = OFFormSerializer::serialize($result->xml);
+            $res = OFFormSerializer::fromXmlToJsonData($result->xml);
 
             if (!$res) {
                 continue;
@@ -90,9 +92,13 @@ class OFDataController extends ResourceController
             }
 
             $res["id"] = $result->id;
-            $serialized[] = $res;
+            $jsonSerialized[] = $res;
         }
 
-        return response()->json($serialized);
+        if($responseInXml) {
+            return response(OFFormSerializer::fromJsonToXmlDataWithControls($jsonSerialized))->header('Content-Type', 'application/xml');
+        }
+
+        return response()->json(new OFDataCollection($jsonSerialized));
     }
 }
