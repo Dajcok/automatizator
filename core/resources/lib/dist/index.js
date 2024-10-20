@@ -1,9 +1,10 @@
-import { FormRenderer } from "./src/form_renderer";
+import { FormRenderer } from "./src/form.renderer";
 import axios from "axios";
 import { FetchListener } from "./src/utils/fetch_listener";
 import { loadStyle } from "./src/utils/loader";
-const PROXY_URL = "http://localhost:8001";
-const CORE_URL = "http://localhost:8000";
+import { FormBuilderRenderer } from "./src/form_builder.renderer";
+const PROXY_URL = "http://localhost:8002";
+const CORE_URL = "http://localhost:8001";
 loadStyle(CORE_URL + '/css/core.css');
 window.fetchListener = new FetchListener((context) => {
     console.log('Request intercepted', context);
@@ -12,7 +13,9 @@ window.fetchListener = new FetchListener((context) => {
     }
     return context;
 });
-window.formRenderer = new FormRenderer(axios.create({
+const _axios = axios.create({
     baseURL: CORE_URL,
     withCredentials: true,
-}), PROXY_URL);
+});
+window.formRenderer = new FormRenderer(_axios, PROXY_URL);
+window.formBuilderRenderer = new FormBuilderRenderer(_axios, PROXY_URL);

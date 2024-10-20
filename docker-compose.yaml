@@ -13,18 +13,6 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U n8n -d n8n" ]
       interval: 10s
       retries: 5
-  postgres_docassemble:
-    image: postgres:latest
-    environment:
-      - POSTGRES_DB=docassemble
-      - POSTGRES_USER=docassemble
-      - POSTGRES_PASSWORD=docassemble_password
-    volumes:
-      - postgres_docassemble_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U docassemble -d docassemble" ]
-      interval: 10s
-      retries: 5
   postgres_orbeon:
     image: postgres:latest
     environment:
@@ -59,21 +47,6 @@ services:
       - n8n_data:/root/.n8n
     depends_on:
       postgres_n8n:
-        condition: service_healthy
-  docassemble:
-    image: jhpyle/docassemble
-    ports:
-      - "80:80"
-    environment:
-      - DB_TYPE=postgresql
-      - POSTGRES_DB=docassemble
-      - POSTGRES_USER=docassemble
-      - POSTGRES_PASSWORD=docassemble_password
-      - POSTGRES_HOST=postgres_docassemble
-    volumes:
-      - docassemble_data:/usr/share/docassemble/files
-    depends_on:
-      postgres_docassemble:
         condition: service_healthy
   orbeon:
     build:

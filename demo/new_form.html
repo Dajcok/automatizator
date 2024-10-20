@@ -2,15 +2,14 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
-  <title>Prihláška</title>
+  <title>New form</title>
   <link rel="stylesheet" href="style.css">
-  <script src="http://localhost:8000/js/fr_bundle.iife.js"></script>
+  <script src="http://localhost:8001/js/fr_bundle.iife.js"></script>
   <script>
     window.addEventListener('load', function() {
-      window.formRenderer.render('hr', 'subcontractor', document.querySelector('#container'));
+      window.formBuilderRenderer.render(document.querySelector('#container'), 'api/of/definition/hr/new');
     });
   </script>
-
 </head>
 <body>
 <div id="container"></div>

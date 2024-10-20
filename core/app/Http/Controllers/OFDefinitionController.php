@@ -25,18 +25,9 @@ class OFDefinitionController extends ResourceController
         parent::__construct($repository, $resource, $collection, OrbeonFormDefinition::class);
     }
 
-    public function render(string $app, string $form): Application|Response|ResponseFactory
+    private function forwardCookies(Response $response, array $cookies): void
     {
-        $data = $this->service->render($app, $form);
-
-        $response = response($data['html'])
-            ->header('Content-Type', 'text/html');
-
-        if (!isset($data['cookies'])) {
-            return $response;
-        }
-
-        foreach ($data['cookies'] as $cookie) {
+        foreach ($cookies as $cookie) {
             $response->cookie(
                 $cookie->name,
                 $cookie->value,
@@ -48,6 +39,32 @@ class OFDefinitionController extends ResourceController
                 $cookie->raw ?? false,
                 $cookie->sameSite ?? 'none'
             );
+        }
+    }
+
+    public function newForm(string $app): Application|Response|ResponseFactory
+    {
+        $data = $this->service->newForm($app);
+
+        $response = response($data['html'])
+            ->header('Content-Type', 'text/html');
+
+        if (isset($data['cookies'])) {
+            $this->forwardCookies($response, $data['cookies']);
+        }
+
+        return $response;
+    }
+
+    public function render(string $app, string $form): Application|Response|ResponseFactory
+    {
+        $data = $this->service->render($app, $form);
+
+        $response = response($data['html'])
+            ->header('Content-Type', 'text/html');
+
+        if (isset($data['cookies'])) {
+            $this->forwardCookies($response, $data['cookies']);
         }
 
         return $response;

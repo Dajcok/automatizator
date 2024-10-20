@@ -1,10 +1,10 @@
 import {AxiosInstance} from "axios";
 import {translate} from "./translate";
 
-export class FormRenderer {
+export abstract class BaseRenderer {
     constructor(
-        private readonly axios: AxiosInstance,
-        private readonly proxyUrl: string,
+        protected readonly axios: AxiosInstance,
+        protected readonly proxyUrl: string,
     ) {
         if (!axios.defaults.baseURL) {
             throw new Error('axios baseURL is not defined');
@@ -17,9 +17,10 @@ export class FormRenderer {
      * Lastly it returns only the html content of the form.
      *
      * @param html
-     * @private
      */
-    private processFormHTML(html: string): {
+    protected processHTML(
+        html: string,
+    ): {
         html: string,
         scriptEls: HTMLScriptElement[],
         linkEls: HTMLLinkElement[]
@@ -77,7 +78,7 @@ export class FormRenderer {
      * @param linkEls
      * @private
      */
-    private loadResources(scriptEls: HTMLScriptElement[], linkEls: HTMLLinkElement[]) {
+    protected loadResources(scriptEls: HTMLScriptElement[], linkEls: HTMLLinkElement[]) {
         function loadScriptsSequentially(scripts: HTMLScriptElement[], index = 0) {
             if (index >= scripts.length) return;
 
@@ -104,17 +105,26 @@ export class FormRenderer {
         loadScriptsSequentially(Array.from(scriptEls));
     }
 
-    public async render(app: string, form: string, container: HTMLElement) {
-        const response = await this.axios.post(`api/of/definition/${app}/${form}/render`, {}, {
+    /**
+     * This method renders orbeon page in the given container.
+     * - It first fetches the html content of the page
+     * - Then it processes the html content using processHTML method
+     *
+     * @param container
+     * @param pageUrl
+     * @param beforeRenderCb
+     */
+    public async render(container: HTMLElement, pageUrl: string, beforeRenderCb?: (container: HTMLElement) => void): Promise<void> {
+        const response = await this.axios.get(pageUrl, {
             headers: {
                 'Content-Type': 'application/json',
             }
-        }).catch(e => {
+        }).catch((e: any) => {
             console.error('Error fetching form', e);
             throw e;
         });
 
-        const {html, scriptEls, linkEls} = this.processFormHTML(response.data);
+        const {html, scriptEls, linkEls} = this.processHTML(response.data);
 
         try {
             this.loadResources(scriptEls, linkEls);
@@ -122,10 +132,9 @@ export class FormRenderer {
             console.error('Error loading resources', e);
         }
 
-        //Attach classes to the container that are required by Orbeon
-        container.classList.add('orbeon');
-        container.classList.add('xforms-disable-alert-as-tooltip');
-        container.classList.add('yui-skin-sam');
+        if (beforeRenderCb) {
+            beforeRenderCb(container);
+        }
 
         container.innerHTML = html;
 

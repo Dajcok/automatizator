@@ -25,20 +25,22 @@ export class OrbeonService {
         };
     }
 
-    async getResource(path: string, session: string): Promise<any> {
+    async getResource(
+        path: string,
+        headers: Record<string, undefined | string | string[]>,
+    ): Promise<any> {
         try {
             const response: AxiosResponse = await this.client.get(
                 `/orbeon/${path}`,
                 {
-                    headers: {
-                        Cookie: `JSESSIONID=${session}`,
-                    },
+                    headers,
+                    responseType: "arraybuffer",
                 },
             );
 
             return {
                 content: response.data,
-                contentType: response.headers["content-type"],
+                headers: response.headers,
             };
         } catch (error) {
             throw new OrbeonException("Error fetching resource", 500, error);
@@ -120,6 +122,8 @@ export class OrbeonException extends Error {
     }
 }
 
-export default new OrbeonService(axios.create({
-    baseURL: "http://localhost:8080",
-}));
+export default new OrbeonService(
+    axios.create({
+        baseURL: "http://localhost:8080",
+    }),
+);

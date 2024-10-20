@@ -61,7 +61,7 @@
                 validationQuery="select 1"
                 testOnBorrow="true"
 
-                username="orbeon_user"
+                username="orbeon"
                 password="orbeon_password"
                 url="jdbc:postgresql://postgres_orbeon:5432/orbeon?useUnicode=true&amp;characterEncoding=UTF8&amp;socketTimeout=30&amp;tcpKeepAlive=true"
         />

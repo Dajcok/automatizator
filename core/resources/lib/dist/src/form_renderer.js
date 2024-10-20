@@ -1,30 +1,6 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import { translate } from "./translate";
-export class FormRenderer {
-    constructor(axios, proxyUrl) {
-        this.axios = axios;
-        this.proxyUrl = proxyUrl;
-        if (!axios.defaults.baseURL) {
-            throw new Error('axios baseURL is not defined');
-        }
-    }
-    /**
-     * This method replaces all script, img and link urls with the absolute URLs to point to the core server.
-     * It also removes the script and link elements from the html and returns them separately.
-     * Lastly it returns only the html content of the form.
-     *
-     * @param html
-     * @private
-     */
-    processFormHTML(html) {
+import { BaseRenderer } from "./base.renderer";
+export class FormRenderer extends BaseRenderer {
+    processHTML(html) {
         const appendWithProxyUrl = (originalUrl) => {
             if (originalUrl.startsWith('file://')) {
                 originalUrl = originalUrl.substring(7);
@@ -60,13 +36,6 @@ export class FormRenderer {
             linkEls,
         };
     }
-    /**
-     * This method loads all the scripts and links into the document
-     *
-     * @param scriptEls
-     * @param linkEls
-     * @private
-     */
     loadResources(scriptEls, linkEls) {
         function loadScriptsSequentially(scripts, index = 0) {
             if (index >= scripts.length)
@@ -90,31 +59,12 @@ export class FormRenderer {
         });
         loadScriptsSequentially(Array.from(scriptEls));
     }
-    render(app, form, container) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.axios.post(`api/of/definition/${app}/${form}/render`, {}, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }).catch(e => {
-                console.error('Error fetching form', e);
-                throw e;
-            });
-            const { html, scriptEls, linkEls } = this.processFormHTML(response.data);
-            try {
-                this.loadResources(scriptEls, linkEls);
-            }
-            catch (e) {
-                console.error('Error loading resources', e);
-            }
+    render(container, pageUrl) {
+        return super.render(container, pageUrl, (container) => {
             //Attach classes to the container that are required by Orbeon
             container.classList.add('orbeon');
             container.classList.add('xforms-disable-alert-as-tooltip');
             container.classList.add('yui-skin-sam');
-            container.innerHTML = html;
-            requestAnimationFrame(() => {
-                translate();
-            });
         });
     }
 }

@@ -2,11 +2,9 @@ import express, { Request, Response } from "express";
 import orbeonService from "./orbeon_service";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import bodyParser from 'body-parser';
-import bodyParserXml from 'body-parser-xml';
 
 const app = express();
-const port = 8001;
+const port = 8002;
 
 app.use(cors({
     credentials: true,
@@ -28,9 +26,15 @@ app.get("/orbeon/*", async (req: Request, res: Response) => {
     const path = req.params[0]
 
     try {
-        const resource = await orbeonService.getResource(path, req.cookies.JSESSIONID);
+        const resource = await orbeonService.getResource(path, req.headers);
 
-        res.header("Content-Type", resource.contentType).send(resource.content);
+        Object.entries(resource.headers).forEach(([key, value]) => {
+            if (value) {
+                res.setHeader(key, value as string);
+            }
+        });
+
+        res.end(resource.content);
     } catch (error) {
         res.status(500).send((error as Error).message);
     }
@@ -38,8 +42,6 @@ app.get("/orbeon/*", async (req: Request, res: Response) => {
 
 app.post("/orbeon/*", async (req: Request, res: Response) => {
     const path = req.params[0];
-
-    console.log(req.body);
 
     try {
         const resource = await orbeonService.postResource(path, req.cookies.JSESSIONID, req.body);

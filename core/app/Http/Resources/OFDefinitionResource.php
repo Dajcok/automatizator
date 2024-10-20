@@ -23,6 +23,8 @@ class OFDefinitionResource extends JsonResource
             'app' => $this->resource->app,
             'form' => $this->resource->form,
             'form_version' => $this->resource->form_version,
+            'created_at' => $this->resource->created,
+            'updated_at' => $this->resource->last_modified_time,
         ];
     }
 }

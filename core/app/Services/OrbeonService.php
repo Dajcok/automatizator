@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Utils\CookieParser;
 use App\Utils\HTMLProcessor;
+use DOMElement;
 use DOMException;
 use Exception;
 use GuzzleHttp\Client;
@@ -14,12 +15,18 @@ interface OrbeonServiceContract
     //Form definitions
     public function render(string $app, string $form): array;
 
+    public function newForm(string $app): array;
+
     //Form data
     public function saveFormData(string $app, string $form, string $document, string $data, bool $final = true): array;
 
     //Static
     public function getResource(string $path, string $session): array;
+
     public function postResource(string $path, string $session, string $body): array;
+
+    //Submissions
+    public function submitFormValue(string $session, string $inputId, string $value, string $uuid, int $sequence): array;
 }
 
 /**
@@ -32,7 +39,8 @@ readonly class OrbeonService implements OrbeonServiceContract
     public function __construct(
         private Client $client
     )
-    {}
+    {
+    }
 
     /**
      * The value of the header must be valid JSON, and follow the format described below. An example
@@ -132,6 +140,58 @@ readonly class OrbeonService implements OrbeonServiceContract
     }
 
     /**
+     * Renders ui for creating a new form for specified app.
+     *
+     * @throws OrbeonException
+     */
+    public function newForm(string $app): array
+    {
+        try {
+            $response = $this->client->request('GET', "/orbeon/fr/orbeon/builder/new", [
+                'headers' => [
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept-Encoding' => 'gzip, deflate, br, zstd',
+                    'Cache-Control' => 'no-cache',
+                    'Connection' => 'keep-alive',
+                    'Host' => request()->getHttpHost(),
+                    'Pragma' => 'no-cache',
+                ]
+            ]);
+
+            $htmlProcessor = new HTMLProcessor($response->getBody()->getContents());
+
+            //We don't need to check whether the element exists, because we know it does.
+            $dynamicScriptEl = $htmlProcessor->getScriptElementsBySrc('/orbeon/xforms-server/form/dynamic/')[0];
+
+            $uuid = $this->getSessionUUIDForBuilder($dynamicScriptEl);
+            $sessionCookie = $response->getHeader('Set-Cookie')[0];
+            $parts = explode(';', $sessionCookie);
+            $jsessionId = explode('=', $parts[0])[1];
+
+            $this->submitFormValue(
+                $jsessionId,
+                'dialog-form-settings≡fb-tabbable≡xf-1989≡fb-app-name-input',
+                $app,
+                $uuid
+            );
+
+            $appEl = $htmlProcessor->getElement(
+                '//*[@id="dialog-form-settings≡fb-tabbable≡xf-1989≡fb-app-name-input≡xforms-input-1"]'
+            );
+
+            $appEl->setAttribute('value', $app);
+            $appEl->setAttribute('readonly', 'true');
+
+            return [
+                'html' => $htmlProcessor->getHTML(),
+                'cookies' => CookieParser::parseFromResponse($response->getHeader('Set-Cookie'))
+            ];
+        } catch (GuzzleException $e) {
+            throw OrbeonException::fromHttpStatusCode($e->getCode())->withDetail($e->getMessage());
+        }
+    }
+
+    /**
      * Saving form data to Orbeon Forms is done via a PUT request to the /fr/service/{app}/{form}/data/{document}
      * endpoint.
      *
@@ -182,7 +242,7 @@ readonly class OrbeonService implements OrbeonServiceContract
         try {
             $response = $this->client->request('GET', '/orbeon/' . $path, [
                 'headers' => [
-                    'Cookie' => "JSESSIONID=".$session
+                    'Cookie' => "JSESSIONID=" . $session
                 ]
             ]);
 
@@ -209,7 +269,7 @@ readonly class OrbeonService implements OrbeonServiceContract
         try {
             $response = $this->client->request('POST', '/orbeon/' . $path, [
                 'headers' => [
-                    'Cookie' => "JSESSIONID=".$session
+                    'Cookie' => "JSESSIONID=" . $session
                 ],
                 'body' => $body
             ]);
@@ -221,6 +281,62 @@ readonly class OrbeonService implements OrbeonServiceContract
         } catch (GuzzleException $e) {
             throw OrbeonException::fromHttpStatusCode($e->getCode())->withDetail($e->getMessage());
         }
+    }
+
+    /**
+     * Every time user interacts with an orbeon form such as the one for
+     * specifying the form settings, call on x-forms api is done. If we want
+     * to preset some values, we have also have to post it to the x-forms api.
+     * This method is used to build the payload for the form settings form.
+     *
+     * @param string $session
+     * @param string $inputId
+     * @param string $value
+     * @param string $uuid
+     * @param int    $sequence
+     * @return array
+     * @throws OrbeonException
+     */
+    public function submitFormValue(
+        string $session,
+        string $inputId,
+        string $value,
+        string $uuid,
+        int    $sequence = 1
+    ): array
+    {
+        $eventRequest = <<<XML
+            <!DOCTYPE xxf:event-request [
+            <!ENTITY nbsp "&#160;">
+            ]>
+            <xxf:event-request xmlns:xxf="http://orbeon.org/oxf/xml/xforms">
+                <xxf:uuid>{$uuid}</xxf:uuid>
+                <xxf:sequence>{$sequence}</xxf:sequence>
+                <xxf:action>
+                    <xxf:event name="xxforms-value" source-control-id="{$inputId}">
+                        <xxf:property name="value">{$value}</xxf:property>
+                    </xxf:event>
+                </xxf:action>
+            </xxf:event-request>
+        XML;
+
+        return $this->postResource('xforms-server', $session, $eventRequest);
+    }
+
+    private function getSessionUUIDForBuilder(
+        DOMElement $el
+    ): string|null
+    {
+        $scriptSrc = $el->getAttribute('src');
+        $parts = explode('/dynamic/', $scriptSrc);
+
+        $uuid = null;
+
+        if (count($parts) > 1) {
+            $uuid = explode('.js', $parts[1])[0];
+        }
+
+        return $uuid;
     }
 }
 
