@@ -1,5 +1,5 @@
 # automatizator
-Solution for administrative processes optimization utilizing n8n, Orbeon, Docassemble, AnythingLLM and my own digital signature solution called iDocuments. It's core is built using Laravel 11 and RabbitMQ
+Solution for administrative processes optimization utilizing n8n, Orbeon, Docxtemplater, AnythingLLM and my own digital signature solution called iDocuments. It's core is built using Laravel 11 and RabbitMQ
 
 # For stargazers
 Thank you all for starring this repository! It’s exciting to see your interest, so I wanted to share an update on the project's current status. We're still in the early stages of development, and unfortunately, I can only dedicate a few hours each week to work on it. Because of this, there’s no comprehensive documentation yet, and the setup or contribution process might not be immediately clear.
