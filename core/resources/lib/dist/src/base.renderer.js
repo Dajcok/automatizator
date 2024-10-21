@@ -28,6 +28,9 @@ export class BaseRenderer {
             if (originalUrl.startsWith('file://')) {
                 originalUrl = originalUrl.substring(7);
             }
+            else if (originalUrl.startsWith('http://localhost')) {
+                originalUrl = originalUrl.substring(21);
+            }
             if (!this.proxyUrl) {
                 return this.axios.defaults.baseURL + originalUrl;
             }
@@ -67,27 +70,42 @@ export class BaseRenderer {
      * @private
      */
     loadResources(scriptEls, linkEls) {
-        function loadScriptsSequentially(scripts, index = 0) {
-            if (index >= scripts.length)
-                return;
-            const oldScriptEl = scripts[index];
-            const newScriptEl = document.createElement('script');
-            newScriptEl.src = oldScriptEl.src;
-            newScriptEl.type = oldScriptEl.type || 'text/javascript';
-            newScriptEl.defer = oldScriptEl.defer;
-            newScriptEl.onload = () => {
-                loadScriptsSequentially(scripts, index + 1);
-            };
-            document.head.appendChild(newScriptEl);
-        }
-        Array.from(linkEls).forEach(oldLinkEl => {
-            const newLinkEl = document.createElement('link');
-            newLinkEl.href = oldLinkEl.href;
-            newLinkEl.rel = oldLinkEl.rel;
-            newLinkEl.media = oldLinkEl.media;
-            document.head.appendChild(newLinkEl);
+        return __awaiter(this, void 0, void 0, function* () {
+            function loadScriptsSequentially(scripts, index = 0) {
+                return new Promise((resolve, reject) => {
+                    if (index >= scripts.length) {
+                        resolve();
+                        return;
+                    }
+                    const oldScriptEl = scripts[index];
+                    const newScriptEl = document.createElement('script');
+                    newScriptEl.src = oldScriptEl.src;
+                    newScriptEl.type = oldScriptEl.type || 'text/javascript';
+                    newScriptEl.defer = oldScriptEl.defer;
+                    newScriptEl.onload = () => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            yield loadScriptsSequentially(scripts, index + 1);
+                            resolve();
+                        }
+                        catch (error) {
+                            reject(error);
+                        }
+                    });
+                    newScriptEl.onerror = () => {
+                        reject(new Error(`Failed to load script: ${newScriptEl.src}`));
+                    };
+                    document.head.appendChild(newScriptEl);
+                });
+            }
+            Array.from(linkEls).forEach(oldLinkEl => {
+                const newLinkEl = document.createElement('link');
+                newLinkEl.href = oldLinkEl.href;
+                newLinkEl.rel = oldLinkEl.rel;
+                newLinkEl.media = oldLinkEl.media;
+                document.head.appendChild(newLinkEl);
+            });
+            yield loadScriptsSequentially(Array.from(scriptEls));
         });
-        loadScriptsSequentially(Array.from(scriptEls));
     }
     /**
      * This method renders orbeon page in the given container.
@@ -109,16 +127,16 @@ export class BaseRenderer {
                 throw e;
             });
             const { html, scriptEls, linkEls } = this.processHTML(response.data);
-            try {
-                this.loadResources(scriptEls, linkEls);
-            }
-            catch (e) {
-                console.error('Error loading resources', e);
-            }
             if (beforeRenderCb) {
                 beforeRenderCb(container);
             }
             container.innerHTML = html;
+            try {
+                yield this.loadResources(scriptEls, linkEls);
+            }
+            catch (e) {
+                console.error('Error loading resources', e);
+            }
             requestAnimationFrame(() => {
                 translate();
             });

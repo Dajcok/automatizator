@@ -28,6 +28,8 @@ export abstract class BaseRenderer {
         const appendWithProxyUrl = (originalUrl: string) => {
             if (originalUrl.startsWith('file://')) {
                 originalUrl = originalUrl.substring(7);
+            } else if (originalUrl.startsWith('http://localhost')) {
+                originalUrl = originalUrl.substring(21);
             }
 
             if (!this.proxyUrl) {
@@ -78,21 +80,35 @@ export abstract class BaseRenderer {
      * @param linkEls
      * @private
      */
-    protected loadResources(scriptEls: HTMLScriptElement[], linkEls: HTMLLinkElement[]) {
-        function loadScriptsSequentially(scripts: HTMLScriptElement[], index = 0) {
-            if (index >= scripts.length) return;
+    protected async loadResources(scriptEls: HTMLScriptElement[], linkEls: HTMLLinkElement[]) {
+        function loadScriptsSequentially(scripts: HTMLScriptElement[], index = 0): Promise<void> {
+            return new Promise<void>((resolve, reject) => {
+                if (index >= scripts.length) {
+                    resolve();
+                    return;
+                }
 
-            const oldScriptEl = scripts[index];
-            const newScriptEl = document.createElement('script');
-            newScriptEl.src = oldScriptEl.src;
-            newScriptEl.type = oldScriptEl.type || 'text/javascript';
-            newScriptEl.defer = oldScriptEl.defer;
+                const oldScriptEl = scripts[index];
+                const newScriptEl = document.createElement('script');
+                newScriptEl.src = oldScriptEl.src;
+                newScriptEl.type = oldScriptEl.type || 'text/javascript';
+                newScriptEl.defer = oldScriptEl.defer;
 
-            newScriptEl.onload = () => {
-                loadScriptsSequentially(scripts, index + 1);
-            };
+                newScriptEl.onload = async () => {
+                    try {
+                        await loadScriptsSequentially(scripts, index + 1);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
 
-            document.head.appendChild(newScriptEl);
+                newScriptEl.onerror = () => {
+                    reject(new Error(`Failed to load script: ${newScriptEl.src}`));
+                };
+
+                document.head.appendChild(newScriptEl);
+            });
         }
 
         Array.from(linkEls).forEach(oldLinkEl => {
@@ -102,8 +118,10 @@ export abstract class BaseRenderer {
             newLinkEl.media = oldLinkEl.media;
             document.head.appendChild(newLinkEl);
         });
-        loadScriptsSequentially(Array.from(scriptEls));
+
+        await loadScriptsSequentially(Array.from(scriptEls));
     }
+
 
     /**
      * This method renders orbeon page in the given container.
@@ -126,17 +144,18 @@ export abstract class BaseRenderer {
 
         const {html, scriptEls, linkEls} = this.processHTML(response.data);
 
-        try {
-            this.loadResources(scriptEls, linkEls);
-        } catch (e) {
-            console.error('Error loading resources', e);
-        }
-
         if (beforeRenderCb) {
             beforeRenderCb(container);
         }
 
+        //We need to insert HTML before loading resources, because the resources might depend on the HTML
         container.innerHTML = html;
+
+        try {
+            await this.loadResources(scriptEls, linkEls);
+        } catch (e) {
+            console.error('Error loading resources', e);
+        }
 
         requestAnimationFrame(() => {
             translate();

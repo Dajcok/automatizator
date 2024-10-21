@@ -8,7 +8,7 @@ const port = 8002;
 
 app.use(cors({
     credentials: true,
-    origin: "null",
+    origin: "http://localhost:8081",
 }));
 app.use(cookieParser());
 
@@ -36,6 +36,7 @@ app.get("/orbeon/*", async (req: Request, res: Response) => {
 
         res.end(resource.content);
     } catch (error) {
+        console.error(error);
         res.status(500).send((error as Error).message);
     }
 });
@@ -48,6 +49,7 @@ app.post("/orbeon/*", async (req: Request, res: Response) => {
 
         res.header("Content-Type", resource.contentType).send(resource.content);
     } catch (error) {
+        console.error(error);
         res.status(500).send((error as Error).message);
     }
 });

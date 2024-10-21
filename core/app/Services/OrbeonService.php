@@ -160,10 +160,10 @@ readonly class OrbeonService implements OrbeonServiceContract
 
             $htmlProcessor = new HTMLProcessor($response->getBody()->getContents());
 
-            //We don't need to check whether the element exists, because we know it does.
-            $dynamicScriptEl = $htmlProcessor->getScriptElementsBySrc('/orbeon/xforms-server/form/dynamic/')[0];
+            $htmlProcessor->removeElementsByClassName('fr-orbeon-version');
 
-            $uuid = $this->getSessionUUIDForBuilder($dynamicScriptEl);
+            $uuid = $this->getSessionUUIDForBuilder($htmlProcessor);
+
             $sessionCookie = $response->getHeader('Set-Cookie')[0];
             $parts = explode(';', $sessionCookie);
             $jsessionId = explode('=', $parts[0])[1];
@@ -323,10 +323,18 @@ readonly class OrbeonService implements OrbeonServiceContract
         return $this->postResource('xforms-server', $session, $eventRequest);
     }
 
+    /**
+     * This method extracts the session UUID from the script element that
+     * contains the dynamic script for the form builder.
+     *
+     * @param HTMLProcessor $el
+     * @return string|null
+     */
     private function getSessionUUIDForBuilder(
-        DOMElement $el
+        HTMLProcessor $htmlProcessor,
     ): string|null
     {
+        $el = $htmlProcessor->getScriptElementsBySrc('/orbeon/xforms-server/form/dynamic/')[0];
         $scriptSrc = $el->getAttribute('src');
         $parts = explode('/dynamic/', $scriptSrc);
 
