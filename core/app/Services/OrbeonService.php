@@ -15,7 +15,7 @@ interface OrbeonServiceContract
     //Form definitions
     public function render(string $app, string $form): array;
 
-    public function newForm(string $app): array;
+    public function builder(string $app, string $docId): array;
 
     //Form data
     public function saveFormData(string $app, string $form, string $document, string $data, bool $final = true): array;
@@ -144,10 +144,10 @@ readonly class OrbeonService implements OrbeonServiceContract
      *
      * @throws OrbeonException
      */
-    public function newForm(string $app): array
+    public function builder(string $app, string $docId = null): array
     {
         try {
-            $response = $this->client->request('GET', "/orbeon/fr/orbeon/builder/new", [
+            $reqConfig = [
                 'headers' => [
                     'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                     'Accept-Encoding' => 'gzip, deflate, br, zstd',
@@ -156,30 +156,39 @@ readonly class OrbeonService implements OrbeonServiceContract
                     'Host' => request()->getHttpHost(),
                     'Pragma' => 'no-cache',
                 ]
-            ]);
+            ];
+            $isNewForm = $docId === null;
+
+            //If we are requesting to edit existing form
+            if(!$isNewForm) {
+                $response = $this->client->request('GET', "/orbeon/fr/orbeon/builder/edit/$docId", $reqConfig);
+            } else {
+                $response = $this->client->request('GET', "/orbeon/fr/orbeon/builder/new", $reqConfig);
+            }
 
             $htmlProcessor = new HTMLProcessor($response->getBody()->getContents());
-
             $htmlProcessor->removeElementsByClassName('fr-orbeon-version');
 
-            $uuid = $this->getSessionUUIDForBuilder($htmlProcessor);
+            //We want to preset values only for new forms
+            if($isNewForm) {
+                $uuid = $this->getSessionUUIDForBuilder($htmlProcessor);
 
-            $sessionCookie = $response->getHeader('Set-Cookie')[0];
-            $parts = explode(';', $sessionCookie);
-            $jsessionId = explode('=', $parts[0])[1];
+                $sessionCookie = $response->getHeader('Set-Cookie')[0];
+                $parts = explode(';', $sessionCookie);
+                $jsessionId = explode('=', $parts[0])[1];
 
-            $this->submitFormValue(
-                $jsessionId,
-                'dialog-form-settings≡fb-tabbable≡xf-1989≡fb-app-name-input',
-                $app,
-                $uuid
-            );
+                $this->submitFormValue(
+                    $jsessionId,
+                    'dialog-form-settings≡fb-tabbable≡xf-1989≡fb-app-name-input',
+                    $app,
+                    $uuid
+                );
+            }
 
+            //But we want to make app name readonly for existing forms also
             $appEl = $htmlProcessor->getElement(
                 '//*[@id="dialog-form-settings≡fb-tabbable≡xf-1989≡fb-app-name-input≡xforms-input-1"]'
             );
-
-            $appEl->setAttribute('value', $app);
             $appEl->setAttribute('readonly', 'true');
 
             return [

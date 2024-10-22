@@ -21,7 +21,6 @@ class OFDefinitionController extends ResourceController
         OFDefinitionResource                   $resource,
         OFDefinitionCollection                 $collection,
         private readonly OrbeonServiceContract $service,
-        private readonly OrbeonIControlTextRepository $controlTextRepository
     )
     {
         parent::__construct($repository, $resource, $collection, OrbeonFormDefinition::class);
@@ -46,7 +45,21 @@ class OFDefinitionController extends ResourceController
 
     public function newForm(string $app): Application|Response|ResponseFactory
     {
-        $data = $this->service->newForm($app);
+        $data = $this->service->builder($app);
+
+        $response = response($data['html'])
+            ->header('Content-Type', 'text/html');
+
+        if (isset($data['cookies'])) {
+            $this->forwardCookies($response, $data['cookies']);
+        }
+
+        return $response;
+    }
+
+    public function editForm(string $app, string $docId): Application|Response|ResponseFactory
+    {
+        $data = $this->service->builder($app, $docId);
 
         $response = response($data['html'])
             ->header('Content-Type', 'text/html');

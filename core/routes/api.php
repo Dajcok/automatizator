@@ -10,6 +10,7 @@ Route::prefix('api/of')->group(function () {
         Route::get('/{app}', [OFDefinitionController::class, 'index']);
         Route::get('/{app}/{form}/render', [OFDefinitionController::class, 'render']);
         Route::get('/{app}/new', [OFDefinitionController::class, 'newForm']);
+        Route::get('/{app}/{docId}/edit', [OFDefinitionController::class, 'editForm']);
     });
 
     Route::prefix('data')->group(function () {
