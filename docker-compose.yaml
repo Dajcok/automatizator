@@ -13,6 +13,7 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U n8n -d n8n" ]
       interval: 10s
       retries: 5
+
   postgres_orbeon:
     image: postgres:latest
     environment:
@@ -48,6 +49,7 @@ services:
     depends_on:
       postgres_n8n:
         condition: service_healthy
+
   orbeon:
     build:
       context: ./orbeon
@@ -62,6 +64,22 @@ services:
     depends_on:
       postgres_orbeon:
         condition: service_healthy
+
+  postgres_core:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=core
+      - POSTGRES_USER=core
+      - POSTGRES_PASSWORD=core_password
+    volumes:
+      - postgres_core_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U core -d core_password" ]
+      interval: 10s
+      retries: 5
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -71,11 +89,9 @@ services:
       - "5050:80"
     depends_on:
       - postgres_n8n
-      - postgres_docassemble
       - postgres_orbeon
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-
 
 volumes:
   postgres_n8n_data:
@@ -84,3 +100,4 @@ volumes:
   docassemble_data:
   n8n_data:
   pgadmin_data:
+  postgres_core_data:

@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Of;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class OFDefinitionCollection extends BaseCollection
+class OFDataCollection extends ResourceCollection
 {
-    public $collects = OFDefinitionResource::class;
+    public $collects = OFDataResource::class;
 
     /**
      * Transform the resource collection into an array.
@@ -16,7 +17,7 @@ class OFDefinitionCollection extends BaseCollection
     public function toArray(Request $request): array
     {
         return [
-            'definitions' => $this->collection,
+            'data' => $this->collection,
         ];
     }
 }

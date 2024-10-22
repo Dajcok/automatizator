@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Of;
 
-use App\Models\OrbeonFormData;
+use App\Models\Of\OrbeonFormData;
+use App\Repositories\Repository;
 
 class OFDataRepository extends Repository
 {

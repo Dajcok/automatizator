@@ -1,31 +1,26 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Of;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrbeonFormDataAttach extends Model
+class OrbeonFormDefinition extends Model
 {
     use HasFactory;
 
-    protected $table = 'orbeon_form_data_attach';
+    protected $table = 'orbeon_form_definition';
     public $timestamps = false;
 
     protected $fillable = [
         'created',
         'last_modified_time',
         'last_modified_by',
-        'username',
-        'groupname',
-        'organization_id',
         'app',
         'form',
         'form_version',
-        'document_id',
+        'form_metadata',
         'deleted',
-        'draft',
-        'file_name',
-        'file_content'
+        'xml'
     ];
 }

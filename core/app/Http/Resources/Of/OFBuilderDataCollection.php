@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Of;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use App\Http\Resources\OFBuilderDataResource;
 
 class OFBuilderDataCollection extends ResourceCollection
 {

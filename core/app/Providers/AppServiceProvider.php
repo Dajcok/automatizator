@@ -2,14 +2,13 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\OFDefinitionResource;
-use App\Models\OrbeonFormDefinition;
+use App\Models\Of\OrbeonFormDefinition;
 use App\Policies\OFDefinitionPolicy;
+use App\Services\OrbeonService;
+use App\Services\OrbeonServiceContract;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use App\Services\OrbeonService;
-use App\Services\OrbeonServiceContract;
 
 class AppServiceProvider extends ServiceProvider
 {

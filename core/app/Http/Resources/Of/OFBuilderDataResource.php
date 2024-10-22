@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Of;
 
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class OFBuilderDataResource extends JsonResource
 {
@@ -27,6 +27,7 @@ class OFBuilderDataResource extends JsonResource
             "document_id" => $this->resource->document_id,
             "form_name" => $this->resource->form_name,
             "form_title" => $this->resource->form_title,
+            "is_draft" => $this->resource->is_draft,
         ];
     }
 }

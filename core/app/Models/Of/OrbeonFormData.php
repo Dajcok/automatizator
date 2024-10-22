@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Of;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class OrbeonICurrent extends Model
+class OrbeonFormData extends Model
 {
     use HasFactory;
 
-    protected $table = 'orbeon_i_current';
-    public $timestamps = false;
+    protected $table = 'orbeon_form_data';
 
     protected $fillable = [
-        'data_id',
         'created',
         'last_modified_time',
         'last_modified_by',
@@ -25,11 +23,18 @@ class OrbeonICurrent extends Model
         'form_version',
         'stage',
         'document_id',
-        'draft'
+        'deleted',
+        'draft',
+        'xml'
     ];
 
-    public function orbeonFormData()
+    public function orbeonICurrent()
     {
-        return $this->belongsTo(OrbeonFormData::class, 'data_id');
+        return $this->hasOne(OrbeonICurrent::class, 'data_id');
+    }
+
+    public function orbeonIControlText()
+    {
+        return $this->hasMany(OrbeonIControlText::class, 'data_id');
     }
 }

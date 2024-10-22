@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Of;
 
-use App\Http\Resources\OFDefinitionCollection;
-use App\Http\Resources\OFDefinitionResource;
-use App\Models\OrbeonFormDefinition;
-use App\Repositories\OFDefinitionRepository;
-use App\Repositories\OrbeonIControlTextRepository;
+use App\Http\Controllers\ResourceController;
+use App\Http\Resources\Of\OFDefinitionCollection;
+use App\Http\Resources\Of\OFDefinitionResource;
+use App\Models\Of\OrbeonFormDefinition;
+use App\Repositories\Of\OFDefinitionRepository;
 use App\Services\OrbeonServiceContract;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
-use Illuminate\Http\Response;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class OFDefinitionController extends ResourceController
 {

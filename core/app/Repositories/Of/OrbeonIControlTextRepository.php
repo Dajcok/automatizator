@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Of;
 
-use App\Models\OrbeonIControlText;
+use App\Models\Of\OrbeonIControlText;
+use App\Repositories\Repository;
 
 class OrbeonIControlTextRepository extends Repository
 {
@@ -29,9 +30,14 @@ class OrbeonIControlTextRepository extends Repository
             return str_contains($item->control, 'form-name');
         });
 
+        $appNameRes = $results->filter(function ($item) {
+            return str_contains($item->control, 'application-name');
+        });
+
         return [
             "form_name" => $nameRes->first()->val,
             "form_title" => $titleRes->first()->val,
+            "app_name" => $appNameRes->first()->val
         ];
     }
 }

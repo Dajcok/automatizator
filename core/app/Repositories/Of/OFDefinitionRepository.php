@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Of;
 
-use App\Models\OrbeonFormDefinition;
+use App\Models\Of\OrbeonFormDefinition;
+use App\Repositories\Repository;
 
 class OFDefinitionRepository extends Repository
 {

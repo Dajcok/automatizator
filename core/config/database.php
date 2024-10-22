@@ -97,6 +97,19 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        'pgsql_core' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_CORE_HOST', '127.0.0.1'),
+            'port' => env('DB_CORE_PORT', '5431'),
+            'database' => env('DB_CORE_DATABASE', ''),
+            'username' => env('DB_CORE_USERNAME', ''),
+            'password' => env('DB_CORE_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'schema' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

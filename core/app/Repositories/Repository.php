@@ -65,4 +65,9 @@ abstract class Repository
     {
         return $model->paginate($perPage);
     }
+
+    public function exists($query)
+    {
+        return $this->model->where($query)->exists();
+    }
 }
