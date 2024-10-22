@@ -12,6 +12,8 @@ export class BaseRenderer {
     constructor(axios, proxyUrl) {
         this.axios = axios;
         this.proxyUrl = proxyUrl;
+        this.newScriptEls = [];
+        this.newLinkEls = [];
         if (!axios.defaults.baseURL) {
             throw new Error('axios baseURL is not defined');
         }
@@ -71,7 +73,7 @@ export class BaseRenderer {
      */
     loadResources(scriptEls, linkEls) {
         return __awaiter(this, void 0, void 0, function* () {
-            function loadScriptsSequentially(scripts, index = 0) {
+            const loadScriptsSequentially = (scripts, index = 0) => {
                 return new Promise((resolve, reject) => {
                     if (index >= scripts.length) {
                         resolve();
@@ -95,14 +97,16 @@ export class BaseRenderer {
                         reject(new Error(`Failed to load script: ${newScriptEl.src}`));
                     };
                     document.head.appendChild(newScriptEl);
+                    this.newScriptEls.push(newScriptEl);
                 });
-            }
+            };
             Array.from(linkEls).forEach(oldLinkEl => {
                 const newLinkEl = document.createElement('link');
                 newLinkEl.href = oldLinkEl.href;
                 newLinkEl.rel = oldLinkEl.rel;
                 newLinkEl.media = oldLinkEl.media;
                 document.head.appendChild(newLinkEl);
+                this.newLinkEls.push(newLinkEl);
             });
             yield loadScriptsSequentially(Array.from(scriptEls));
         });
@@ -130,6 +134,7 @@ export class BaseRenderer {
             if (beforeRenderCb) {
                 beforeRenderCb(container);
             }
+            //We need to insert HTML before loading resources, because the resources might depend on the HTML
             container.innerHTML = html;
             try {
                 yield this.loadResources(scriptEls, linkEls);
@@ -141,5 +146,21 @@ export class BaseRenderer {
                 translate();
             });
         });
+    }
+    /**
+     * This method cleans up the container by removing all the children and the script and link elements
+     * This should be called after the form is no longer needed
+     * @param container
+     */
+    cleanup(container) {
+        container.innerHTML = '';
+        this.newScriptEls.forEach(el => {
+            el.remove();
+        });
+        this.newLinkEls.forEach(el => {
+            el.remove();
+        });
+        this.newScriptEls = [];
+        this.newLinkEls = [];
     }
 }

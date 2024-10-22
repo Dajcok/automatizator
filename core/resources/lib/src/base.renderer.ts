@@ -2,6 +2,9 @@ import {AxiosInstance} from "axios";
 import {translate} from "./translate";
 
 export abstract class BaseRenderer {
+    protected newScriptEls: HTMLScriptElement[] = [];
+    protected newLinkEls: HTMLLinkElement[] = [];
+
     constructor(
         protected readonly axios: AxiosInstance,
         protected readonly proxyUrl: string,
@@ -81,7 +84,7 @@ export abstract class BaseRenderer {
      * @private
      */
     protected async loadResources(scriptEls: HTMLScriptElement[], linkEls: HTMLLinkElement[]) {
-        function loadScriptsSequentially(scripts: HTMLScriptElement[], index = 0): Promise<void> {
+        const loadScriptsSequentially = (scripts: HTMLScriptElement[], index = 0): Promise<void> => {
             return new Promise<void>((resolve, reject) => {
                 if (index >= scripts.length) {
                     resolve();
@@ -90,6 +93,7 @@ export abstract class BaseRenderer {
 
                 const oldScriptEl = scripts[index];
                 const newScriptEl = document.createElement('script');
+
                 newScriptEl.src = oldScriptEl.src;
                 newScriptEl.type = oldScriptEl.type || 'text/javascript';
                 newScriptEl.defer = oldScriptEl.defer;
@@ -108,6 +112,7 @@ export abstract class BaseRenderer {
                 };
 
                 document.head.appendChild(newScriptEl);
+                this.newScriptEls.push(newScriptEl);
             });
         }
 
@@ -117,6 +122,8 @@ export abstract class BaseRenderer {
             newLinkEl.rel = oldLinkEl.rel;
             newLinkEl.media = oldLinkEl.media;
             document.head.appendChild(newLinkEl);
+
+            this.newLinkEls.push(newLinkEl);
         });
 
         await loadScriptsSequentially(Array.from(scriptEls));
@@ -160,5 +167,25 @@ export abstract class BaseRenderer {
         requestAnimationFrame(() => {
             translate();
         });
+    }
+
+    /**
+     * This method cleans up the container by removing all the children and the script and link elements
+     * This should be called after the form is no longer needed
+     * @param container
+     */
+    public cleanup(container: HTMLElement): void {
+        container.innerHTML = '';
+
+        this.newScriptEls.forEach(el => {
+            el.remove();
+        });
+
+        this.newLinkEls.forEach(el => {
+            el.remove();
+        });
+
+        this.newScriptEls = [];
+        this.newLinkEls = [];
     }
 }

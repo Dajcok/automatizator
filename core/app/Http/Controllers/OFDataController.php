@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\BaseCollection;
+use App\Http\Resources\OFBuilderDataCollection;
 use App\Http\Resources\OFDataCollection;
 use App\Http\Resources\OFDataResource;
 use App\Models\OrbeonFormDefinition;
 use App\Repositories\OFDataRepository;
 use App\Repositories\OFDefinitionRepository;
+use App\Repositories\OrbeonIControlTextRepository;
 use App\Serializers\OFFormSerializer;
 use App\Services\OrbeonServiceContract;
 use App\Utils\VerboseToKey;
@@ -17,6 +19,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Http\Resources\OFBuilderDataResource;
 
 /**
  * Class OFDataController
@@ -29,7 +32,8 @@ class OFDataController extends ResourceController
         OFDataResource                          $resource,
         BaseCollection                          $collection,
         private readonly OrbeonServiceContract  $service,
-        private readonly OFDefinitionRepository $formDefinitionRepository
+        private readonly OFDefinitionRepository $formDefinitionRepository,
+        private readonly OrbeonIControlTextRepository $controlTextRepository
     )
     {
         parent::__construct($repository, $resource, $collection, OrbeonFormDefinition::class);
@@ -51,8 +55,6 @@ class OFDataController extends ResourceController
      */
     public function index(Request $request): Response|JsonResponse
     {
-        $responseInXml = $request->headers->get("user-agent") === "OrbeonForms";
-
         [$app, $form] = [$request->route("app"), $request->route("form")];
         //Used to query both orbeon_form_data and orbeon_form_definition tables
         $where = [
@@ -60,11 +62,35 @@ class OFDataController extends ResourceController
             "form" => $form
         ];
 
-        $definition = $this->formDefinitionRepository->query($where)[0];
+        if($app === "orbeon" && $form === "builder") {
+            $data = $this->repository->query($where);
 
-        if(!$definition) {
+            $filteredData = $data->filter(function ($item) {
+                $formMeta = $this->controlTextRepository->getFormMeta($item->id);
+
+                if (!$formMeta || empty($formMeta["form_name"]) || empty($formMeta["form_title"])) {
+                    return false; // Skip if form_name or form_title is missing
+                }
+
+                $item->form_name = $formMeta["form_name"];
+                $item->form_title = $formMeta["form_title"];
+
+                return true;
+            });
+
+            $resources = OFBuilderDataResource::collection($filteredData);
+            return response()->json(new OFBuilderDataCollection($resources));
+        }
+
+        $responseInXml = $request->headers->get("user-agent") === "OrbeonForms";
+
+        $definition = $this->formDefinitionRepository->query($where);
+
+        if(count($definition) === 0) {
             return response()->json([]);
         }
+
+        $definition = $definition[0];
 
         $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
 

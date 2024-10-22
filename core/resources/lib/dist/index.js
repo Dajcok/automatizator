@@ -7,7 +7,6 @@ const PROXY_URL = "http://localhost:8002";
 const CORE_URL = "http://localhost:8001";
 loadStyle(CORE_URL + '/css/core.css');
 window.fetchListener = new FetchListener((context) => {
-    console.log('Request intercepted', context);
     if (context.url.startsWith('/')) {
         context.url = PROXY_URL + context.url;
     }
