@@ -21,7 +21,8 @@ class OFDefinitionResource extends JsonResource
     {
         return [
             'app' => $this->resource->app,
-            'form' => $this->resource->form,
+            'form_name' => $this->resource->form,
+            'form_title' => $this->resource->form_title,
             'form_version' => $this->resource->form_version,
             'created_at' => $this->resource->created,
             'updated_at' => $this->resource->last_modified_time,

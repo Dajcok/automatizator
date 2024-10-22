@@ -20,13 +20,13 @@ class OFBuilderDataResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->id,
-            "created_at" => $this->created,
-            "updated_at" => $this->last_modified_time,
-            "stage" => $this->stage,
-            "document_id" => $this->document_id,
-            "form_name" => $this->form_name,
-            "form_title" => $this->form_title,
+            "id" => $this->resource->id,
+            "created_at" => $this->resource->created,
+            "updated_at" => $this->resource->last_modified_time,
+            "stage" => $this->resource->stage,
+            "document_id" => $this->resource->document_id,
+            "form_name" => $this->resource->form_name,
+            "form_title" => $this->resource->form_title,
         ];
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Resources\OFDefinitionCollection;
 use App\Http\Resources\OFDefinitionResource;
 use App\Models\OrbeonFormDefinition;
 use App\Repositories\OFDefinitionRepository;
+use App\Repositories\OrbeonIControlTextRepository;
 use App\Services\OrbeonServiceContract;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
@@ -19,7 +20,8 @@ class OFDefinitionController extends ResourceController
         OFDefinitionRepository                 $repository,
         OFDefinitionResource                   $resource,
         OFDefinitionCollection                 $collection,
-        private readonly OrbeonServiceContract $service
+        private readonly OrbeonServiceContract $service,
+        private readonly OrbeonIControlTextRepository $controlTextRepository
     )
     {
         parent::__construct($repository, $resource, $collection, OrbeonFormDefinition::class);
@@ -77,6 +79,16 @@ class OFDefinitionController extends ResourceController
         $definitions = $this->repository->query([
             "app" => $app,
         ]);
+
+        $definitions->each(function ($definition) {
+            $xml = simplexml_load_string($definition->form_metadata);
+
+            if (isset($xml->title)) {
+                $definition->form_title = (string) $xml->title;
+            } else {
+                $definition->form_title = null;
+            }
+        });
 
         return response()->json(new OFDefinitionCollection($definitions));
     }
