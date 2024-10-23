@@ -11,6 +11,7 @@ Route::prefix('api')->group(function () {
         Route::prefix('definition')->group(function () {
             Route::get('/{app}', [OFDefinitionController::class, 'index']);
             Route::get('/{app}/{form}/render', [OFDefinitionController::class, 'render']);
+            Route::get('/{app}/{form}', [OFDefinitionController::class, 'show']);
             Route::get('/{app}/new', [OFDefinitionController::class, 'newForm']);
             Route::get('/{app}/{docId}/edit', [OFDefinitionController::class, 'editForm']);
         });
@@ -22,7 +23,7 @@ Route::prefix('api')->group(function () {
     });
 
     Route::prefix("core")->group(function () {
-        Route::prefix("model_config")->group(function () {
+        Route::prefix("model-config")->group(function () {
             Route::get("/", [ModelConfigController::class, "index"]);
             Route::post("/", [ModelConfigController::class, "store"]);
             Route::get("/{id}", [ModelConfigController::class, "show"]);

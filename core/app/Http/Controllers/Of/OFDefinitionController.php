@@ -7,24 +7,22 @@ use App\Http\Resources\Of\OFDefinitionCollection;
 use App\Http\Resources\Of\OFDefinitionResource;
 use App\Models\Of\OrbeonFormDefinition;
 use App\Repositories\Of\OFDefinitionRepository;
+use App\Serializers\OFFormSerializer;
 use App\Services\OrbeonServiceContract;
+use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class OFDefinitionController extends ResourceController
+class OFDefinitionController
 {
     public function __construct(
-        OFDefinitionRepository                 $repository,
-        OFDefinitionResource                   $resource,
-        OFDefinitionCollection                 $collection,
-        private readonly OrbeonServiceContract $service,
+        private readonly OFDefinitionRepository $repository,
+        private readonly OrbeonServiceContract  $service,
     )
-    {
-        parent::__construct($repository, $resource, $collection, OrbeonFormDefinition::class);
-    }
+    {}
 
     private function forwardCookies(Response $response, array $cookies): void
     {
@@ -97,12 +95,36 @@ class OFDefinitionController extends ResourceController
             $xml = simplexml_load_string($definition->form_metadata);
 
             if (isset($xml->title)) {
-                $definition->form_title = (string) $xml->title;
+                $definition->form_title = (string)$xml->title;
             } else {
                 $definition->form_title = null;
             }
         });
 
         return response()->json(new OFDefinitionCollection($definitions));
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function show(Request $request): JsonResponse
+    {
+        $app = $request->route("app");
+        $form = $request->route("form");
+
+        $definition = $this->repository->query([
+            "app" => $app,
+            "form" => $form,
+        ]);
+
+        if(!count($definition)) {
+            throw new Exception("Form definition not found");
+        }
+
+        $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition[0]->xml);
+
+        return response()->json([
+            "definition" => $serializedDefinition,
+        ]);
     }
 }
