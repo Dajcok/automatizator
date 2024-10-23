@@ -13,7 +13,7 @@ use GuzzleHttp\Exception\GuzzleException;
 interface OrbeonServiceContract
 {
     //Form definitions
-    public function render(string $app, string $form): array;
+    public function render(string $app, string $form, string $docId): array;
 
     public function builder(string $app, string $docId): array;
 
@@ -109,10 +109,10 @@ readonly class OrbeonService implements OrbeonServiceContract
      * @return array<string, string>
      * @throws OrbeonException
      */
-    public function render(string $app, string $form): array
+    public function render(string $app, string $form, string $docId = null): array
     {
         try {
-            $response = $this->client->request('GET', "/orbeon/fr/$app/$form/new", [
+            $config = [
                 'headers' => [
                     'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                     'Accept-Encoding' => 'gzip, deflate, br, zstd',
@@ -121,7 +121,13 @@ readonly class OrbeonService implements OrbeonServiceContract
                     'Host' => request()->getHttpHost(),
                     'Pragma' => 'no-cache',
                 ]
-            ]);
+            ];
+
+            if(!$docId) {
+                $response = $this->client->request('GET', "/orbeon/fr/$app/$form/new", $config);
+            } else {
+                $response = $this->client->request('GET', "/orbeon/fr/$app/$form/edit/$docId", $config);
+            }
 
             $htmlProcessor = new HTMLProcessor($response->getBody()->getContents());
 

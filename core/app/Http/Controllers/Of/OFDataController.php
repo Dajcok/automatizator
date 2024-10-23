@@ -58,6 +58,7 @@ class OFDataController extends ResourceController
     public function index(Request $request): Response|JsonResponse
     {
         [$app, $form] = [$request->route("app"), $request->route("form")];
+        $verbose = $request->get("verbose", false);
 
         $retrievingFormDefinitionData = false;
         $parentApp = null;
@@ -133,7 +134,7 @@ class OFDataController extends ResourceController
 
         $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
 
-        $results = $this->repository->query($where);
+        $results = $this->repository->queryAndReturnNewestByDocumentId($where);
 
         if (!$results) {
             return response()->json([]);
@@ -149,14 +150,19 @@ class OFDataController extends ResourceController
             }
 
             //Iterate over the serialized definition and replace control ids with their labels
-            foreach (array_keys($res) as $key) {
-                if (array_key_exists($key, $serializedDefinition)) {
-                    $res[VerboseToKey::convert($serializedDefinition[$key])] = $res[$key];
-                    unset($res[$key]);
+            if ($verbose) {
+                foreach (array_keys($res) as $key) {
+                    if (array_key_exists($key, $serializedDefinition)) {
+                        $res[VerboseToKey::convert($serializedDefinition[$key])] = $res[$key];
+                        unset($res[$key]);
+                    }
                 }
             }
 
             $res["id"] = $result->id;
+            $res["document_id"] = $result->document_id;
+            $res["updated_at"] = $result->last_modified_time;
+            $res["created_at"] = $result->created;
             $jsonSerialized[] = $res;
         }
 

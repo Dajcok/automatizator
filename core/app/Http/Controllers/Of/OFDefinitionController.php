@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Of;
 
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\ResourceController;
 use App\Http\Resources\Of\OFDefinitionCollection;
 use App\Http\Resources\Of\OFDefinitionResource;
@@ -16,11 +17,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class OFDefinitionController
+readonly class OFDefinitionController
 {
     public function __construct(
-        private readonly OFDefinitionRepository $repository,
-        private readonly OrbeonServiceContract  $service,
+        private OFDefinitionRepository $repository,
+        private OrbeonServiceContract  $service,
     )
     {}
 
@@ -83,6 +84,20 @@ class OFDefinitionController
         return $response;
     }
 
+    public function renderEdit(string $app, string $form, string $docId): Application|Response|ResponseFactory
+    {
+        $data = $this->service->render($app, $form, $docId);
+
+        $response = response($data['html'])
+            ->header('Content-Type', 'text/html');
+
+        if (isset($data['cookies'])) {
+            $this->forwardCookies($response, $data['cookies']);
+        }
+
+        return $response;
+    }
+
     public function index(Request $request): JsonResponse
     {
         $app = $request->route("app");
@@ -117,7 +132,7 @@ class OFDefinitionController
             "form" => $form,
         ]);
 
-        if(!count($definition)) {
+        if (!count($definition)) {
             throw new Exception("Form definition not found");
         }
 

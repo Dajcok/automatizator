@@ -6,8 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class ModelConfig extends Model
 {
+    protected $table = 'model_config';
+    protected $connection = 'pgsql_core';
+
     protected $fillable = [
         'column_config',
+        'form_name',
+        'app_name',
     ];
 
     protected $casts = [

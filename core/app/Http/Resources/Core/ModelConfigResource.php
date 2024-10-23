@@ -6,6 +6,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ModelConfigResource extends JsonResource
 {
+    public function __construct($request = null)
+    {
+        parent::__construct($request);
+    }
+
     public function toArray($request): array
     {
         return [
