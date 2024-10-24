@@ -56,6 +56,11 @@ abstract class Repository
         return $this->model->destroy($id);
     }
 
+    public function deleteWhere(array $query): int
+    {
+        return $this->model->where($query)->delete();
+    }
+
     public function getModel(): Model
     {
         return $this->model;

@@ -20,6 +20,7 @@ Route::prefix('api')->group(function () {
         Route::prefix('data')->group(function () {
             Route::put('/{app}/{form}/{document}', [OFDataController::class, 'save']);
             Route::get('/{app}/{form}', [OFDataController::class, 'index']);
+            Route::delete('/{id}', [OFDataController::class, 'destroy']);
         });
     });
 

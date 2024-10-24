@@ -8,10 +8,11 @@ use App\Http\Resources\Of\OFBuilderDataCollection;
 use App\Http\Resources\Of\OFBuilderDataResource;
 use App\Http\Resources\Of\OFDataCollection;
 use App\Http\Resources\Of\OFDataResource;
-use App\Models\Of\OrbeonFormDefinition;
+use App\Models\Of\OrbeonFormData;
 use App\Repositories\Of\OFDataRepository;
 use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
+use App\Repositories\Of\OrbeonICurrentRepository;
 use App\Serializers\OFFormSerializer;
 use App\Services\OrbeonServiceContract;
 use App\Utils\VerboseToKey;
@@ -21,6 +22,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * Class OFDataController
@@ -35,10 +37,11 @@ class OFDataController extends ResourceController
         private readonly OrbeonServiceContract        $service,
         private readonly OFDefinitionRepository       $formDefinitionRepository,
         private readonly OrbeonIControlTextRepository $controlTextRepository,
-        private readonly OFDefinitionRepository       $definitionRepository
+        private readonly OFDefinitionRepository       $definitionRepository,
+        private readonly OrbeonICurrentRepository     $orbeonICurrentRepository
     )
     {
-        parent::__construct($repository, $resource, $collection, OrbeonFormDefinition::class);
+        parent::__construct($repository, $resource, $collection, OrbeonFormData::class);
     }
 
     public function save(string $app, string $form, string $document, string $data, bool $final = true): Application|Response|ResponseFactory
@@ -171,5 +174,26 @@ class OFDataController extends ResourceController
         }
 
         return response()->json(new OFDataCollection($jsonSerialized));
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        //As we should not manipulate with orbeon db structure, we need
+        //to ensure that all orbeon_i_current_data records that point to
+        //this record are deleted before we delete the record itself.
+        $this->orbeonICurrentRepository->deleteWhere([
+            "data_id" => $id
+        ]);
+
+        //We also need to make sure that all records that have document_id
+        //same as record that we seek to delete are deleted. That's because
+        //of audit that orbeon does. Form more info see OFDataRepository.php
+        //queryAndReturnNewestByDocumentId method.
+        $recordToDel = $this->repository->find($id);
+        $this->repository->deleteWhere([
+            "document_id" => $recordToDel->document_id
+        ]);
+
+        return response()->json(null, SymfonyResponse::HTTP_NO_CONTENT);
     }
 }
