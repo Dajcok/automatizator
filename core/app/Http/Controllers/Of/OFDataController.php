@@ -9,6 +9,7 @@ use App\Http\Resources\Of\OFBuilderDataResource;
 use App\Http\Resources\Of\OFDataCollection;
 use App\Http\Resources\Of\OFDataResource;
 use App\Models\Of\OrbeonFormData;
+use App\Repositories\Core\ModelConfigRepository;
 use App\Repositories\Of\OFDataRepository;
 use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
@@ -38,7 +39,8 @@ class OFDataController extends ResourceController
         private readonly OFDefinitionRepository       $formDefinitionRepository,
         private readonly OrbeonIControlTextRepository $controlTextRepository,
         private readonly OFDefinitionRepository       $definitionRepository,
-        private readonly OrbeonICurrentRepository     $orbeonICurrentRepository
+        private readonly OrbeonICurrentRepository     $orbeonICurrentRepository,
+        private readonly ModelConfigRepository        $modelConfigRepository
     )
     {
         parent::__construct($repository, $resource, $collection, OrbeonFormData::class);
@@ -184,15 +186,41 @@ class OFDataController extends ResourceController
         $this->orbeonICurrentRepository->deleteWhere([
             "data_id" => $id
         ]);
-
         //We also need to make sure that all records that have document_id
         //same as record that we seek to delete are deleted. That's because
         //of audit that orbeon does. Form more info see OFDataRepository.php
         //queryAndReturnNewestByDocumentId method.
         $recordToDel = $this->repository->find($id);
+        $formMeta = $this->controlTextRepository->getFormMeta($recordToDel->id);
+
+        $this->controlTextRepository->deleteWhere(['data_id' => $recordToDel->id]);
         $this->repository->deleteWhere([
             "document_id" => $recordToDel->document_id
         ]);
+
+        //If we are deleting form definition
+        if ($recordToDel->app === "orbeon" && $recordToDel->form === "builder") {
+            if ($formMeta && !empty($formMeta["app_name"]) && !empty($formMeta["form_name"])) {
+                $this->definitionRepository->deleteWhere([
+                    "app" => $formMeta["app_name"],
+                    "form" => $formMeta["form_name"],
+                ]);
+                $this->modelConfigRepository->deleteWhere([
+                    "app_name" => $formMeta["app_name"],
+                    "form_name" => $formMeta["form_name"],
+                ]);
+
+                $dataToDelete = $this->repository->query([
+                    "app" => $formMeta["app_name"],
+                    "form" => $formMeta["form_name"],
+                ]);
+                foreach ($dataToDelete as $data) {
+                    $this->controlTextRepository->deleteWhere(['data_id' => $data->id]);
+                    $this->orbeonICurrentRepository->deleteWhere(['data_id' => $data->id]);
+                    $this->repository->delete($data->id);
+                }
+            }
+        }
 
         return response()->json(null, SymfonyResponse::HTTP_NO_CONTENT);
     }

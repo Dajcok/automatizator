@@ -142,4 +142,19 @@ readonly class OFDefinitionController
             "definition" => $serializedDefinition,
         ]);
     }
+
+    public function destroy(Request $request): JsonResponse
+    {
+        $app = $request->route("app");
+        $form = $request->route("form");
+
+        $this->repository->deleteWhere([
+            "app" => $app,
+            "form" => $form,
+        ]);
+
+        return response()->json([
+            "message" => "Form definition deleted",
+        ]);
+    }
 }
