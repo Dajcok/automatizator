@@ -76,6 +76,7 @@ class OFFormSerializer
         }
     }
 
+
     /**
      * Serializes JSON form data with added definition to quickly map the data with controls to XML
      *
@@ -84,22 +85,25 @@ class OFFormSerializer
      */
     static function fromJsonToXmlDataWithControls(array $json): bool|string
     {
-        function arrayToXml($data, $xml_data): void
-        {
-            foreach ($data as $key => $value) {
-                if (is_array($value)) {
-                    $subnode = $xml_data->addChild("item");
-                    arrayToXml($value, $subnode);
-                } else {
-                    $xml_data->addChild("$key", htmlspecialchars("$value"));
-                }
-            }
-        }
-
         $xmlData = new SimpleXMLElement('<?xml version="1.0"?><data></data>');
 
-        arrayToXml($json, $xmlData);
+        self::arrayToXml($json, $xmlData);
 
         return $xmlData->asXML();
+    }
+
+    /**
+     * Helper function to convert array to XML
+     */
+    private static function arrayToXml($data, $xml_data): void
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $subnode = $xml_data->addChild("item");
+                self::arrayToXml($value, $subnode);
+            } else {
+                $xml_data->addChild("$key", htmlspecialchars("$value"));
+            }
+        }
     }
 }

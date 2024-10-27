@@ -127,9 +127,13 @@ class OFDataController extends ResourceController
             return response()->json(new OFBuilderDataCollection($resources));
         }
 
-        $responseInXml = $request->headers->get("user-agent") === "OrbeonForms";
+        $responseInXml = $request->headers->get("Host") === "host.docker.internal:8001";
 
-        $definition = $this->formDefinitionRepository->query($where);
+        if($responseInXml) {
+            $verbose = true;
+        }
+
+        $definition = $this->formDefinitionRepository->queryAndReturnNewest($where);
 
         if (count($definition) === 0) {
             return response()->json([]);
@@ -141,7 +145,7 @@ class OFDataController extends ResourceController
 
         $results = $this->repository->queryAndReturnNewestByDocumentId($where);
 
-        if (!$results) {
+        if (!count($results)) {
             return response()->json([]);
         }
 
@@ -172,6 +176,7 @@ class OFDataController extends ResourceController
         }
 
         if ($responseInXml) {
+            logger()->info(OFFormSerializer::fromJsonToXmlDataWithControls($jsonSerialized));
             return response(OFFormSerializer::fromJsonToXmlDataWithControls($jsonSerialized))->header('Content-Type', 'application/xml');
         }
 
