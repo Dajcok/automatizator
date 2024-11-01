@@ -15,15 +15,14 @@ use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
 use App\Repositories\Of\OrbeonICurrentRepository;
 use App\Serializers\OFFormSerializer;
-use App\Services\OrbeonServiceContract;
-use App\Utils\VerboseToKey;
+use App\Utils\LabelToKey;
 use Exception;
-use Illuminate\Contracts\Routing\ResponseFactory;
-use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Illuminate\Support\Facades\DB;
+
+//TODO: Refactor this controller
 
 /**
  * Class OFDataController
@@ -35,10 +34,8 @@ class OFDataController extends ResourceController
         OFDataRepository                              $repository,
         OFDataResource                                $resource,
         BaseCollection                                $collection,
-        private readonly OrbeonServiceContract        $service,
         private readonly OFDefinitionRepository       $formDefinitionRepository,
         private readonly OrbeonIControlTextRepository $controlTextRepository,
-        private readonly OFDefinitionRepository       $definitionRepository,
         private readonly OrbeonICurrentRepository     $orbeonICurrentRepository,
         private readonly ModelConfigRepository        $modelConfigRepository
     )
@@ -46,13 +43,76 @@ class OFDataController extends ResourceController
         parent::__construct($repository, $resource, $collection, OrbeonFormData::class);
     }
 
-    public function save(string $app, string $form, string $document, string $data, bool $final = true): Application|Response|ResponseFactory
+    /**
+     * Used to submit a form to Orbeon through our API.
+     *
+     * @throws Exception
+     */
+    public function store(Request $request): JsonResponse
     {
-        $bin = $this->service->saveFormData($app, $form, $document, $data, $final);
+        [$app, $form] = [$request->route("app"), $request->route("form")];
+        $body = $request->json()->all();
 
-        return response($bin)
-            ->header('Content-Type', 'application/zip')
-            ->header('Content-Disposition', 'inline');
+        $definition = $this->formDefinitionRepository->queryAndReturnNewest([
+            "app" => $app,
+            "form" => $form
+        ]);
+
+        if (count($definition) === 0) {
+            return response()->json([
+                "message" => "Form definition not found"
+            ], 404);
+        }
+
+        $definition = $definition[0];
+
+        $controlsToLabels = OFFormSerializer::fromXmlToJsonControls($definition->xml);
+        $dataWithControls = [];
+        $currentSection = null;
+        foreach ($controlsToLabels as $key => $field) {
+            if (str_contains($key, "section")) {
+                $currentSection = $key;
+                $dataWithControls[$currentSection] = [];
+                continue;
+            }
+
+            $dataWithControls[$currentSection][$key] = $body[LabelToKey::convert($field)];
+        }
+
+        $submissionReadyXml = OFFormSerializer::fromArrayToXmlSubmission($dataWithControls);
+
+        $documentId = sha1(uniqid(mt_rand(), true));
+
+        DB::transaction(function () use ($app, $form, $body, $submissionReadyXml, $documentId, $definition) {
+            $inserted = $this->repository->create([
+                "app" => $app,
+                "form" => $form,
+                "xml" => $submissionReadyXml,
+                "document_id" => $documentId,
+                "created" => now(),
+                "form_version" => $definition->form_version,
+                "last_modified_time" => now(),
+                "deleted" => "N",
+                "draft" => "N",
+            ]);
+
+            $this->orbeonICurrentRepository->create([
+                "data_id" => $inserted->id,
+                "document_id" => $documentId,
+                "created" => now(),
+                "last_modified_time" => now(),
+                "draft" => "N",
+                "app" => $app,
+                "form" => $form,
+                "form_version" => $definition->form_version,
+            ]);
+        });
+
+
+        return response()
+            ->json([
+                "message" => "Submission created"
+            ], 201);
     }
 
     /**
@@ -63,6 +123,7 @@ class OFDataController extends ResourceController
     public function index(Request $request): Response|JsonResponse
     {
         [$app, $form] = [$request->route("app"), $request->route("form")];
+        //Verbose is used to determine whether we should return control labels(if true) or control ids
         $verbose = $request->get("verbose", false);
 
         $retrievingFormDefinitionData = false;
@@ -74,8 +135,8 @@ class OFDataController extends ResourceController
          *  should be like this: /api/of/data/$yourAppName:orbeon/builder.
          *  This way we can have info about the parent app.
          */
-        if (str_contains($app, ':')) {
-            list($parentApp, $orbeonApp) = explode(':', $app, 2);
+        if (str_contains($app, ":")) {
+            list($parentApp, $orbeonApp) = explode(":", $app, 2);
 
             if ($orbeonApp !== "orbeon") {
                 throw new Exception("Misformed app name");
@@ -115,7 +176,7 @@ class OFDataController extends ResourceController
 
                 $item->form_name = $formMeta["form_name"];
                 $item->form_title = $formMeta["form_title"];
-                $item->is_draft = !$this->definitionRepository->exists([
+                $item->is_draft = !$this->formDefinitionRepository->exists([
                     "app" => $parentApp,
                     "form" => $item->form_name,
                 ]);
@@ -127,9 +188,10 @@ class OFDataController extends ResourceController
             return response()->json(new OFBuilderDataCollection($resources));
         }
 
-        $responseInXml = $request->headers->get("Host") === "host.docker.internal:8001";
+        //We use internal host to determine whether Orbeon is fetching data from our core api
+        $isOrbeonFetching = $request->headers->get("Host") === config("app.internal_host");
 
-        if($responseInXml) {
+        if ($isOrbeonFetching) {
             $verbose = true;
         }
 
@@ -162,7 +224,7 @@ class OFDataController extends ResourceController
             if ($verbose) {
                 foreach (array_keys($res) as $key) {
                     if (array_key_exists($key, $serializedDefinition)) {
-                        $res[VerboseToKey::convert($serializedDefinition[$key])] = $res[$key];
+                        $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
                         unset($res[$key]);
                     }
                 }
@@ -175,9 +237,9 @@ class OFDataController extends ResourceController
             $jsonSerialized[] = $res;
         }
 
-        if ($responseInXml) {
-            logger()->info(OFFormSerializer::fromJsonToXmlDataWithControls($jsonSerialized));
-            return response(OFFormSerializer::fromJsonToXmlDataWithControls($jsonSerialized))->header('Content-Type', 'application/xml');
+        if ($isOrbeonFetching) {
+            logger()->info(OFFormSerializer::fromArrayToXmlDynamicDropdownData($jsonSerialized));
+            return response(OFFormSerializer::fromArrayToXmlDynamicDropdownData($jsonSerialized))->header("Content-Type", "application/xml");
         }
 
         return response()->json(new OFDataCollection($jsonSerialized));
@@ -185,48 +247,51 @@ class OFDataController extends ResourceController
 
     public function destroy(int $id): JsonResponse
     {
-        //As we should not manipulate with orbeon db structure, we need
-        //to ensure that all orbeon_i_current_data records that point to
-        //this record are deleted before we delete the record itself.
-        $this->orbeonICurrentRepository->deleteWhere([
-            "data_id" => $id
-        ]);
-        //We also need to make sure that all records that have document_id
-        //same as record that we seek to delete are deleted. That's because
-        //of audit that orbeon does. Form more info see OFDataRepository.php
-        //queryAndReturnNewestByDocumentId method.
-        $recordToDel = $this->repository->find($id);
-        $formMeta = $this->controlTextRepository->getFormMeta($recordToDel->id);
+        DB::transaction(function () use ($id) {
+            //As we should not manipulate with orbeon db structure, we need
+            //to ensure that all orbeon_i_current_data records that point to
+            //this record are deleted before we delete the record itself.
+            $this->orbeonICurrentRepository->deleteWhere([
+                "data_id" => $id
+            ]);
+            //We also need to make sure that all records that have document_id
+            //same as record that we seek to delete are deleted. That""s because
+            //of audit that orbeon does. Form more info see OFDataRepository.php
+            //queryAndReturnNewestByDocumentId method.
+            $recordToDel = $this->repository->find($id);
+            $formMeta = $this->controlTextRepository->getFormMeta($recordToDel->id);
 
-        $this->controlTextRepository->deleteWhere(['data_id' => $recordToDel->id]);
-        $this->repository->deleteWhere([
-            "document_id" => $recordToDel->document_id
-        ]);
+            $this->controlTextRepository->deleteWhere(["data_id" => $recordToDel->id]);
+            $this->repository->deleteWhere([
+                "document_id" => $recordToDel->document_id
+            ]);
 
-        //If we are deleting form definition
-        if ($recordToDel->app === "orbeon" && $recordToDel->form === "builder") {
-            if ($formMeta && !empty($formMeta["app_name"]) && !empty($formMeta["form_name"])) {
-                $this->definitionRepository->deleteWhere([
-                    "app" => $formMeta["app_name"],
-                    "form" => $formMeta["form_name"],
-                ]);
-                $this->modelConfigRepository->deleteWhere([
-                    "app_name" => $formMeta["app_name"],
-                    "form_name" => $formMeta["form_name"],
-                ]);
+            //If we are deleting form definition
+            if ($recordToDel->app === "orbeon" && $recordToDel->form === "builder") {
+                if ($formMeta && !empty($formMeta["app_name"]) && !empty($formMeta["form_name"])) {
+                    $this->formDefinitionRepository->deleteWhere([
+                        "app" => $formMeta["app_name"],
+                        "form" => $formMeta["form_name"],
+                    ]);
+                    $this->modelConfigRepository->deleteWhere([
+                        "app_name" => $formMeta["app_name"],
+                        "form_name" => $formMeta["form_name"],
+                    ]);
 
-                $dataToDelete = $this->repository->query([
-                    "app" => $formMeta["app_name"],
-                    "form" => $formMeta["form_name"],
-                ]);
-                foreach ($dataToDelete as $data) {
-                    $this->controlTextRepository->deleteWhere(['data_id' => $data->id]);
-                    $this->orbeonICurrentRepository->deleteWhere(['data_id' => $data->id]);
-                    $this->repository->delete($data->id);
+                    $dataToDelete = $this->repository->query([
+                        "app" => $formMeta["app_name"],
+                        "form" => $formMeta["form_name"],
+                    ]);
+                    foreach ($dataToDelete as $data) {
+                        $this->controlTextRepository->deleteWhere(["data_id" => $data->id]);
+                        $this->orbeonICurrentRepository->deleteWhere(["data_id" => $data->id]);
+                        $this->repository->delete($data->id);
+                    }
                 }
             }
-        }
 
-        return response()->json(null, SymfonyResponse::HTTP_NO_CONTENT);
+        });
+
+        return response()->json(null, 204);
     }
 }

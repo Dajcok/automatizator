@@ -11,6 +11,8 @@ class OrbeonICurrent extends Model
 
     protected $table = 'orbeon_i_current';
     public $timestamps = false;
+    public $incrementing = false;
+    protected $primaryKey = null;
 
     protected $fillable = [
         'data_id',

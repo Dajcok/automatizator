@@ -76,18 +76,41 @@ class OFFormSerializer
         }
     }
 
+    /**
+     * Used to serialize form data to XML to be saved in the orbeon_form_data table
+     *
+     * @return void
+     */
+    static function fromArrayToXmlSubmission(array $data): string
+    {
+        $xml = new SimpleXMLElement('
+          <form xmlns:fr="http://orbeon.org/oxf/xml/form-runner" fr:data-format-version="4.0.0"></form>
+        ');
+
+        foreach ($data as $sectionKey => $controls) {
+            $section = $xml->addChild($sectionKey);
+
+            foreach ($controls as $controlKey => $value) {
+                $section->addChild($controlKey, htmlspecialchars($value));
+            }
+        }
+
+        return $xml->asXML();
+    }
+
 
     /**
      * Serializes JSON form data with added definition to quickly map the data with controls to XML
+     * It's used to export form data to XML for Orbeon to use it in dynamic dropdowns
      *
      * @param array $json
      * @return bool|string
      */
-    static function fromJsonToXmlDataWithControls(array $json): bool|string
+    static function fromArrayToXmlDynamicDropdownData(array $json): bool|string
     {
         $xmlData = new SimpleXMLElement('<?xml version="1.0"?><data></data>');
 
-        self::arrayToXml($json, $xmlData);
+        self::arrayToXmlDynamicDropdownData($json, $xmlData);
 
         return $xmlData->asXML();
     }
@@ -95,12 +118,12 @@ class OFFormSerializer
     /**
      * Helper function to convert array to XML
      */
-    private static function arrayToXml($data, $xml_data): void
+    private static function arrayToXmlDynamicDropdownData($data, $xml_data): void
     {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $subnode = $xml_data->addChild("item");
-                self::arrayToXml($value, $subnode);
+                self::arrayToXmlDynamicDropdownData($value, $subnode);
             } else {
                 $xml_data->addChild("$key", htmlspecialchars("$value"));
             }

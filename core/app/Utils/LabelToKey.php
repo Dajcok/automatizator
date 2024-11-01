@@ -2,7 +2,7 @@
 
 namespace App\Utils;
 
-class VerboseToKey
+class LabelToKey
 {
     private static function unaccent($string) {
         if ( !preg_match('/[\x80-\xff]/', $string) )
@@ -110,6 +110,6 @@ class VerboseToKey
 
     public static function convert(string $verbose): string
     {
-        return strtolower(str_replace(' ', '_', VerboseToKey::unaccent($verbose)));
+        return strtolower(str_replace(' ', '_', LabelToKey::unaccent($verbose)));
     }
 }

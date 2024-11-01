@@ -9,6 +9,8 @@ class OrbeonFormData extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = 'orbeon_form_data';
 
     protected $fillable = [

@@ -123,4 +123,8 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+     *  URL where the application is hosted outside the container
+     */
+    'internal_host' => 'host.docker.internal:8001'
 ];

@@ -1,0 +1,23 @@
+[2024-10-27 10:18:55 #96415.8]	WARNING	ReactorKqueue::del() (ERRNO 800): failed to delete event[7], has been removed
+[2024-10-27 10:18:55 #96415.8]	WARNING	ReactorKqueue::del() (ERRNO 800): failed to delete event[7], has been removed
+[2024-10-27 10:18:55 #96415.8]	WARNING	ReactorKqueue::del() (ERRNO 800): failed to delete event[7], has been removed
+[2024-10-27 10:18:55 #96415.8]	WARNING	ReactorKqueue::del() (ERRNO 800): failed to delete event[7], has been removed
+[2024-10-27 10:18:55 #96415.8]	WARNING	ReactorKqueue::del() (ERRNO 800): failed to delete event[7], has been removed
+[2024-10-27 10:18:55 #96415.8]	WARNING	ReactorKqueue::del() (ERRNO 800): failed to delete event[7], has been removed
+[2024-10-27 13:38:51 ^18389.14]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 ^22154.13]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 ^16673.8]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 ^23490.12]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 #1316.0]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 ^16674.9]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 ^5419.10]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 ^28010.15]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1332, id=7) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 ^19597.11]	WARNING	swoole_signal_callback() (ERRNO 721): Unable to find callback function for signal Hangup: 1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1331, id=6) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1330, id=5) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1329, id=4) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1328, id=3) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1327, id=2) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1326, id=1) abnormal exit, status=0, signal=1
+[2024-10-27 13:38:51 #1316.0]	WARNING	Server::check_worker_exit_status(): worker(pid=1325, id=0) abnormal exit, status=0, signal=1
