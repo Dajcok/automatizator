@@ -223,10 +223,18 @@ class OFDataController extends ResourceController
             //Iterate over the serialized definition and replace control ids with their labels
             if ($verbose) {
                 foreach (array_keys($res) as $key) {
-                    if (array_key_exists($key, $serializedDefinition)) {
-                        $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
-                        unset($res[$key]);
+                    if (!array_key_exists($key, $serializedDefinition)) {
+                        continue;
                     }
+
+                    if(str_contains(LabelToKey::convert($serializedDefinition[$key]), '*')) {
+                        $association = $this->show($res[$key], $request);
+                        $res[LabelToKey::convert($serializedDefinition[$key])] = $association->getData();
+                    } else {
+                        $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
+                    }
+
+                    unset($res[$key]);
                 }
             }
 
@@ -243,6 +251,59 @@ class OFDataController extends ResourceController
         }
 
         return response()->json(new OFDataCollection($jsonSerialized));
+    }
+
+    public function show(int $id, Request $request): JsonResponse
+    {
+        $data = $this->repository->find($id);
+        $verbose = $request->get("verbose", false);
+
+        if (!$data) {
+            return response()->json([
+                "message" => "Submission not found"
+            ], 404);
+        }
+
+        $res = OFFormSerializer::fromXmlToJsonData($data->xml);
+
+        if (!$res) {
+            return response()->json([
+                "message" => "Submission not found"
+            ], 404);
+        }
+
+        if($verbose) {
+            $definition = $this->formDefinitionRepository->queryAndReturnNewest([
+                "app" => $data->app,
+                "form" => $data->form
+            ]);
+
+            if (count($definition) === 0) {
+                return response()->json([
+                    "message" => "Form definition not found"
+                ], 404);
+            }
+
+            $definition = $definition[0];
+
+            $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
+
+            foreach (array_keys($res) as $key) {
+                if (!array_key_exists($key, $serializedDefinition)) {
+                    continue;
+                }
+
+                $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
+                unset($res[$key]);
+            }
+        }
+
+        $res["id"] = $data->id;
+        $res["document_id"] = $data->document_id;
+        $res["updated_at"] = $data->last_modified_time;
+        $res["created_at"] = $data->created;
+
+        return response()->json(new OFDataResource($res));
     }
 
     public function destroy(int $id): JsonResponse

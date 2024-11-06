@@ -22,6 +22,7 @@ Route::prefix('api')->group(function () {
             Route::put('/{app}/{form}/{document}', [OFDataController::class, 'save']);
             Route::get('/{app}/{form}', [OFDataController::class, 'index']);
             Route::delete('/{id}', [OFDataController::class, 'destroy']);
+            Route::get('/{id}', [OFDataController::class, 'show']);
             Route::post('/{app}/{form}', [OFDataController::class, 'store']);
         });
     });
