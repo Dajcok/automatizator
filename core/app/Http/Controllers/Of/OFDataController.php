@@ -179,15 +179,7 @@ class OFDataController extends ResourceController
             $verbose = true;
         }
 
-        $definition = $this->formDefinitionRepository->queryAndReturnNewest($where);
-
-        if (count($definition) === 0) {
-            return response()->json([]);
-        }
-
-        $definition = $definition[0];
-
-        $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
+        $serializedDefinition = $this->getSerializedDefinition($app, $form);
 
         $results = $this->repository->queryAndReturnNewestByDocumentId($where);
 
@@ -198,7 +190,11 @@ class OFDataController extends ResourceController
         $jsonSerialized = [];
 
         foreach ($results as $result) {
-            $res = $this->representationService->toFormDataRepresentation($result, $app, $form, $verbose);
+            $res = $this->representationService->toFormDataRepresentation(
+                $result,
+                $serializedDefinition,
+                $verbose,
+            );
             $jsonSerialized[] = $res;
         }
 
@@ -210,16 +206,19 @@ class OFDataController extends ResourceController
         return response()->json(new OFDataCollection($jsonSerialized));
     }
 
+    /**
+     * @throws Exception
+     */
     public function show(int $id, Request $request): JsonResponse
     {
         /** @var OrbeonFormData $data */
         $data = $this->repository->find($id);
         $verbose = $request->get("verbose", false);
+        $serializedDefinition = $this->getSerializedDefinition($data->app, $data->form);
 
         $res = $this->representationService->toFormDataRepresentation(
             $data,
-            $data->app,
-            $data->form,
+            $serializedDefinition,
             $verbose
         );
 
@@ -274,5 +273,27 @@ class OFDataController extends ResourceController
         });
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function getSerializedDefinition(
+        string $app,
+        string $form
+    ): array
+    {
+        $definition = $this->formDefinitionRepository->queryAndReturnNewest([
+            "app" => $app,
+            "form" => $form
+        ]);
+
+        if (count($definition) === 0) {
+            return [];
+        }
+
+        $definition = $definition[0];
+
+        return OFFormSerializer::fromXmlToJsonControls($definition->xml);
     }
 }

@@ -9,6 +9,8 @@ use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
 use App\Serializers\OFFormSerializer;
 use App\Utils\LabelToKey;
+use \Illuminate\Http\JsonResponse;
+use Exception;
 
 
 readonly class OFDataRepresentationService
@@ -54,12 +56,14 @@ readonly class OFDataRepresentationService
         });
     }
 
+    /**
+     * @throws Exception
+     */
     public function toFormDataRepresentation(
         OrbeonFormData $data,
-        string $appName,
-        string $formName,
-        $verbose = false
-    ): \Illuminate\Http\JsonResponse|array
+                       $serializedDefinition = null,
+                       $verbose = false,
+    ): JsonResponse|array
     {
         $res = OFFormSerializer::fromXmlToJsonData($data->xml);
 
@@ -70,21 +74,6 @@ readonly class OFDataRepresentationService
         }
 
         if ($verbose) {
-            $definition = $this->ofDefinitionRepository->queryAndReturnNewest([
-                "app" => $appName,
-                "form" => $formName,
-            ]);
-
-            if (count($definition) === 0) {
-                return response()->json([
-                    "message" => "Form definition not found"
-                ], 404);
-            }
-
-            $definition = $definition[0];
-
-            $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
-
             foreach (array_keys($res) as $key) {
                 if (!array_key_exists($key, $serializedDefinition)) {
                     continue;
