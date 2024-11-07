@@ -8,6 +8,7 @@ use App\Http\Resources\Of\OFBuilderDataCollection;
 use App\Http\Resources\Of\OFBuilderDataResource;
 use App\Http\Resources\Of\OFDataCollection;
 use App\Http\Resources\Of\OFDataResource;
+use App\Http\Services\Of\OFDataRepresentationService;
 use App\Models\Of\OrbeonFormData;
 use App\Repositories\Core\ModelConfigRepository;
 use App\Repositories\Of\OFDataRepository;
@@ -22,11 +23,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
-//TODO: Refactor this controller
-
 /**
  * Class OFDataController
- * This controller is used to manage suubmissions of Orbeon forms.
+ * Controller for handling Orbeon form data.
+ * Main tables: orbeon_form_data
  */
 class OFDataController extends ResourceController
 {
@@ -34,10 +34,13 @@ class OFDataController extends ResourceController
         OFDataRepository                              $repository,
         OFDataResource                                $resource,
         BaseCollection                                $collection,
+
         private readonly OFDefinitionRepository       $formDefinitionRepository,
         private readonly OrbeonIControlTextRepository $controlTextRepository,
         private readonly OrbeonICurrentRepository     $orbeonICurrentRepository,
-        private readonly ModelConfigRepository        $modelConfigRepository
+        private readonly ModelConfigRepository        $modelConfigRepository,
+
+        private readonly OFDataRepresentationService  $representationService
     )
     {
         parent::__construct($repository, $resource, $collection, OrbeonFormData::class);
@@ -126,7 +129,11 @@ class OFDataController extends ResourceController
         //Verbose is used to determine whether we should return control labels(if true) or control ids
         $verbose = $request->get("verbose", false);
 
-        $retrievingFormDefinitionData = false;
+        /**
+         * In orbeon both form builder data and submitted form data are stored in orbeon_form_data table.
+         * This Indicates whether we are retrieving form builder data or data of submitted forms
+         */
+        $retrievingFormBuilderData = false;
         $parentApp = null;
         /**
          * Important:
@@ -142,7 +149,7 @@ class OFDataController extends ResourceController
                 throw new Exception("Misformed app name");
             }
 
-            $retrievingFormDefinitionData = $orbeonApp === "orbeon";
+            $retrievingFormBuilderData = $orbeonApp === "orbeon";
 
             $app = "orbeon";
             $form = "builder";
@@ -154,37 +161,14 @@ class OFDataController extends ResourceController
             "form" => $form
         ];
 
-        if ($retrievingFormDefinitionData) {
+        if ($retrievingFormBuilderData) {
             if (!$parentApp) {
                 throw new Exception("Parent app is missing");
             }
 
-            $data = $this->repository->query($where);
+            $representation = $this->representationService->toFormBuilderDataRepresentation($parentApp);
 
-            $filteredData = $data->filter(function ($item) use ($parentApp) {
-                $formMeta = $this->controlTextRepository->getFormMeta($item->id);
-
-                //Skip if app_name is not same as parent app
-                if (!$formMeta || empty($formMeta["app_name"]) || $formMeta["app_name"] !== $parentApp) {
-                    return false;
-                }
-
-                // Skip if form_name or form_title is missing
-                if (empty($formMeta["form_name"]) || empty($formMeta["form_title"])) {
-                    return false;
-                }
-
-                $item->form_name = $formMeta["form_name"];
-                $item->form_title = $formMeta["form_title"];
-                $item->is_draft = !$this->formDefinitionRepository->exists([
-                    "app" => $parentApp,
-                    "form" => $item->form_name,
-                ]);
-
-                return true;
-            });
-
-            $resources = OFBuilderDataResource::collection($filteredData);
+            $resources = OFBuilderDataResource::collection($representation);
             return response()->json(new OFBuilderDataCollection($resources));
         }
 
@@ -214,34 +198,7 @@ class OFDataController extends ResourceController
         $jsonSerialized = [];
 
         foreach ($results as $result) {
-            $res = OFFormSerializer::fromXmlToJsonData($result->xml);
-
-            if (!$res) {
-                continue;
-            }
-
-            //Iterate over the serialized definition and replace control ids with their labels
-            if ($verbose) {
-                foreach (array_keys($res) as $key) {
-                    if (!array_key_exists($key, $serializedDefinition)) {
-                        continue;
-                    }
-
-                    if(str_contains(LabelToKey::convert($serializedDefinition[$key]), '*')) {
-                        $association = $this->show($res[$key], $request);
-                        $res[LabelToKey::convert($serializedDefinition[$key])] = $association->getData();
-                    } else {
-                        $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
-                    }
-
-                    unset($res[$key]);
-                }
-            }
-
-            $res["id"] = $result->id;
-            $res["document_id"] = $result->document_id;
-            $res["updated_at"] = $result->last_modified_time;
-            $res["created_at"] = $result->created;
+            $res = $this->representationService->toFormDataRepresentation($result, $app, $form, $verbose);
             $jsonSerialized[] = $res;
         }
 
@@ -255,53 +212,16 @@ class OFDataController extends ResourceController
 
     public function show(int $id, Request $request): JsonResponse
     {
+        /** @var OrbeonFormData $data */
         $data = $this->repository->find($id);
         $verbose = $request->get("verbose", false);
 
-        if (!$data) {
-            return response()->json([
-                "message" => "Submission not found"
-            ], 404);
-        }
-
-        $res = OFFormSerializer::fromXmlToJsonData($data->xml);
-
-        if (!$res) {
-            return response()->json([
-                "message" => "Submission not found"
-            ], 404);
-        }
-
-        if($verbose) {
-            $definition = $this->formDefinitionRepository->queryAndReturnNewest([
-                "app" => $data->app,
-                "form" => $data->form
-            ]);
-
-            if (count($definition) === 0) {
-                return response()->json([
-                    "message" => "Form definition not found"
-                ], 404);
-            }
-
-            $definition = $definition[0];
-
-            $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition->xml);
-
-            foreach (array_keys($res) as $key) {
-                if (!array_key_exists($key, $serializedDefinition)) {
-                    continue;
-                }
-
-                $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
-                unset($res[$key]);
-            }
-        }
-
-        $res["id"] = $data->id;
-        $res["document_id"] = $data->document_id;
-        $res["updated_at"] = $data->last_modified_time;
-        $res["created_at"] = $data->created;
+        $res = $this->representationService->toFormDataRepresentation(
+            $data,
+            $data->app,
+            $data->form,
+            $verbose
+        );
 
         return response()->json(new OFDataResource($res));
     }

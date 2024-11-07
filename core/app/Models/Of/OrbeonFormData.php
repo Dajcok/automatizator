@@ -5,6 +5,24 @@ namespace App\Models\Of;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\Of\OrbeonFormData
+ * @property int $id
+ * @property string $created
+ * @property string $last_modified_time
+ * @property string $last_modified_by
+ * @property string $username
+ * @property string $groupname
+ * @property int $organization_id
+ * @property string $app
+ * @property string $form
+ * @property string $form_version
+ * @property string $stage
+ * @property string $document_id
+ * @property string $deleted
+ * @property string $draft
+ * @property string $xml
+ */
 class OrbeonFormData extends Model
 {
     use HasFactory;
