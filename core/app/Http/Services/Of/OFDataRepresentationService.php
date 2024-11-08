@@ -9,6 +9,7 @@ use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
 use App\Serializers\OFFormSerializer;
 use App\Utils\LabelToKey;
+use Illuminate\Database\Eloquent\Collection;
 use \Illuminate\Http\JsonResponse;
 use Exception;
 
@@ -25,7 +26,7 @@ readonly class OFDataRepresentationService
 
     public function toFormBuilderDataRepresentation(
         string $appName
-    ): array
+    ): Collection
     {
         $data = $this->ofDataRepository->query([
             "app" => "orbeon",
@@ -63,6 +64,7 @@ readonly class OFDataRepresentationService
         OrbeonFormData $data,
                        $serializedDefinition = null,
                        $verbose = false,
+                       $isOrbeonFetching = false
     ): JsonResponse|array
     {
         $res = OFFormSerializer::fromXmlToJsonData($data->xml);
@@ -79,7 +81,21 @@ readonly class OFDataRepresentationService
                     continue;
                 }
 
-                $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
+                if (!$isOrbeonFetching && str_contains(LabelToKey::convert($serializedDefinition[$key]), '__')) {
+                    /** @var OrbeonFormData $data */
+                    $data = $this->ofDataRepository->find($res[$key]);
+                    $childSerializedDefinition = $this->getSerializedDefinition($data->app, $data->form);
+
+                    $association = $this->toFormDataRepresentation(
+                        $data,
+                        $childSerializedDefinition,
+                        true
+                    );
+                    $res[LabelToKey::convert($serializedDefinition[$key])] = $association;
+                } else {
+                    $res[LabelToKey::convert($serializedDefinition[$key])] = $res[$key];
+                }
+
                 unset($res[$key]);
             }
         }
@@ -90,5 +106,27 @@ readonly class OFDataRepresentationService
         $res["created_at"] = $data->created;
 
         return $res;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getSerializedDefinition(
+        string $app,
+        string $form
+    ): array
+    {
+        $definition = $this->ofDefinitionRepository->queryAndReturnNewest([
+            "app" => $app,
+            "form" => $form
+        ]);
+
+        if (count($definition) === 0) {
+            return [];
+        }
+
+        $definition = $definition[0];
+
+        return OFFormSerializer::fromXmlToJsonControls($definition->xml);
     }
 }

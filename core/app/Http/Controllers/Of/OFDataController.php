@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\DB;
  * Class OFDataController
  * Controller for handling Orbeon form data.
  * Main tables: orbeon_form_data
+ *
+ * @property OFDataRepository $repository
  */
 class OFDataController extends ResourceController
 {
@@ -72,6 +74,7 @@ class OFDataController extends ResourceController
         $controlsToLabels = OFFormSerializer::fromXmlToJsonControls($definition->xml);
         $dataWithControls = [];
         $currentSection = null;
+
         foreach ($controlsToLabels as $key => $field) {
             if (str_contains($key, "section")) {
                 $currentSection = $key;
@@ -87,6 +90,7 @@ class OFDataController extends ResourceController
         $documentId = sha1(uniqid(mt_rand(), true));
 
         DB::transaction(function () use ($app, $form, $body, $submissionReadyXml, $documentId, $definition) {
+            /** @var OrbeonFormData $inserted */
             $inserted = $this->repository->create([
                 "app" => $app,
                 "form" => $form,
@@ -179,7 +183,7 @@ class OFDataController extends ResourceController
             $verbose = true;
         }
 
-        $serializedDefinition = $this->getSerializedDefinition($app, $form);
+        $serializedDefinition = $this->representationService->getSerializedDefinition($app, $form);
 
         $results = $this->repository->queryAndReturnNewestByDocumentId($where);
 
@@ -194,6 +198,7 @@ class OFDataController extends ResourceController
                 $result,
                 $serializedDefinition,
                 $verbose,
+                $isOrbeonFetching
             );
             $jsonSerialized[] = $res;
         }
@@ -214,7 +219,7 @@ class OFDataController extends ResourceController
         /** @var OrbeonFormData $data */
         $data = $this->repository->find($id);
         $verbose = $request->get("verbose", false);
-        $serializedDefinition = $this->getSerializedDefinition($data->app, $data->form);
+        $serializedDefinition = $this->representationService->getSerializedDefinition($data->app, $data->form);
 
         $res = $this->representationService->toFormDataRepresentation(
             $data,
@@ -238,6 +243,7 @@ class OFDataController extends ResourceController
             //same as record that we seek to delete are deleted. That""s because
             //of audit that orbeon does. Form more info see OFDataRepository.php
             //queryAndReturnNewestByDocumentId method.
+            /** @var OrbeonFormData $recordToDel */
             $recordToDel = $this->repository->find($id);
             $formMeta = $this->controlTextRepository->getFormMeta($recordToDel->id);
 
@@ -273,27 +279,5 @@ class OFDataController extends ResourceController
         });
 
         return response()->json(null, 204);
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function getSerializedDefinition(
-        string $app,
-        string $form
-    ): array
-    {
-        $definition = $this->formDefinitionRepository->queryAndReturnNewest([
-            "app" => $app,
-            "form" => $form
-        ]);
-
-        if (count($definition) === 0) {
-            return [];
-        }
-
-        $definition = $definition[0];
-
-        return OFFormSerializer::fromXmlToJsonControls($definition->xml);
     }
 }
