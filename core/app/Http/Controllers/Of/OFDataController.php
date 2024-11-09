@@ -8,7 +8,6 @@ use App\Http\Resources\Of\OFBuilderDataCollection;
 use App\Http\Resources\Of\OFBuilderDataResource;
 use App\Http\Resources\Of\OFDataCollection;
 use App\Http\Resources\Of\OFDataResource;
-use App\Http\Services\Of\OFDataRepresentationService;
 use App\Models\Of\OrbeonFormData;
 use App\Repositories\Core\ModelConfigRepository;
 use App\Repositories\Of\OFDataRepository;
@@ -16,6 +15,7 @@ use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
 use App\Repositories\Of\OrbeonICurrentRepository;
 use App\Serializers\OFFormSerializer;
+use App\Services\Of\OFDataRepresentationService;
 use App\Utils\LabelToKey;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -171,6 +171,15 @@ class OFDataController extends ResourceController
             }
 
             $representation = $this->representationService->toFormBuilderDataRepresentation($parentApp);
+
+            if($request->get("withDefinitionType", false)) {
+                foreach ($representation as $item) {
+                    $item->definition_type = $this->modelConfigRepository->getFormDefinitionType(
+                        $parentApp,
+                        $item->form_name
+                    );
+                }
+            }
 
             $resources = OFBuilderDataResource::collection($representation);
             return response()->json(new OFBuilderDataCollection($resources));

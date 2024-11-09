@@ -11,4 +11,19 @@ class ModelConfigRepository extends Repository
     {
         parent::__construct($model);
     }
+
+    public function getFormDefinitionType(
+        string $appName,
+        string $formName,
+    )
+    {
+        $res = $this->model->where([
+            'app_name' => $appName,
+            'form_name' => $formName,
+        ])->select(
+            'form_type',
+        )->first();
+
+        return $res ? $res->form_type : null;
+    }
 }
