@@ -18,6 +18,7 @@ class ModelConfigResource extends JsonResource
             'created_at' => $this->resource->created_at,
             'updated_at' => $this->resource->updated_at,
             'column_config' => $this->resource->column_config,
+            'form_type' => $this->resource->form_type,
         ];
     }
 }

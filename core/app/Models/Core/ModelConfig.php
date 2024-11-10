@@ -13,9 +13,12 @@ class ModelConfig extends Model
         'column_config',
         'form_name',
         'app_name',
+        'form_type',
+        'filter_config'
     ];
 
     protected $casts = [
         'column_config' => 'array',
+        'filter_config' => 'array'
     ];
 }

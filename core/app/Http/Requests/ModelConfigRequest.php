@@ -26,6 +26,7 @@ class ModelConfigRequest extends FormRequest
             'column_config' => 'required|json',
             'form_name' => 'required|string',
             'app_name' => 'required|string',
+            'form_type' => 'string|in:domain,template',
         ];
     }
 }

@@ -80,12 +80,12 @@ readonly class OFDataRepresentationService
                 }
 
                 if (!$isOrbeonFetching && str_contains(LabelToKey::convert($serializedDefinition[$key]), '__')) {
-                    /** @var OrbeonFormData $data */
-                    $data = $this->ofDataRepository->find($res[$key]);
-                    $childSerializedDefinition = $this->getSerializedDefinition($data->app, $data->form);
+                    /** @var OrbeonFormData $_data */
+                    $_data = $this->ofDataRepository->find($res[$key]);
+                    $childSerializedDefinition = $this->getSerializedDefinition($_data->app, $_data->form);
 
                     $association = $this->toFormDataRepresentation(
-                        $data,
+                        $_data,
                         $childSerializedDefinition,
                         true
                     );

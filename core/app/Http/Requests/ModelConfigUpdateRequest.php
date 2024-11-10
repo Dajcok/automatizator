@@ -24,6 +24,7 @@ class ModelConfigUpdateRequest extends FormRequest
     {
         return [
             'column_config' => 'required|json',
+            'form_type' => 'string|in:domain,template',
         ];
     }
 }

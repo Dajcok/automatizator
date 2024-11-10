@@ -28,7 +28,7 @@ class OFBuilderDataResource extends JsonResource
             "form_name" => $this->resource->form_name,
             "form_title" => $this->resource->form_title,
             "is_draft" => $this->resource->is_draft,
-            "definition_type" => $this->resource->definition_type,
+            "form_type" => $this->resource->form_type,
         ];
     }
 }

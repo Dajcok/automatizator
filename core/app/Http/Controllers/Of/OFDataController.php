@@ -172,9 +172,9 @@ class OFDataController extends ResourceController
 
             $representation = $this->representationService->toFormBuilderDataRepresentation($parentApp);
 
-            if($request->get("withDefinitionType", false)) {
+            if ($request->get("withFormType", false)) {
                 foreach ($representation as $item) {
-                    $item->definition_type = $this->modelConfigRepository->getFormDefinitionType(
+                    $item->form_type = $this->modelConfigRepository->getFormDefinitionType(
                         $parentApp,
                         $item->form_name
                     );
@@ -235,6 +235,13 @@ class OFDataController extends ResourceController
             $serializedDefinition,
             $verbose
         );
+
+        if ($request->get("withFormType", false)) {
+            $res["form_type"] = $this->modelConfigRepository->getFormDefinitionType(
+                $data->app,
+                $data->form
+            );
+        }
 
         return response()->json(new OFDataResource($res));
     }

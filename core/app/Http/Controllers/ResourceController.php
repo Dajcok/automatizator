@@ -63,7 +63,7 @@ abstract class ResourceController extends Controller
      */
     protected function performUpdate(int $id, FormRequest $request): JsonResponse
     {
-        $model = $this->repository->find($id);
+//        $model = $this->repository->find($id);
 //        Gate::authorize('update', $model);
         /** @var TUpdateRequest $request */
         $this->resource->resource = $this->repository->update($id, $request->validated());
