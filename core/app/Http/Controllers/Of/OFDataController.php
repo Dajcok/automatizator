@@ -194,7 +194,7 @@ class OFDataController extends ResourceController
 
         $serializedDefinition = $this->representationService->getSerializedDefinition($app, $form);
 
-        $results = $this->repository->queryAndReturnNewestByDocumentId($where);
+        $results = $this->repository->queryAndReturnNewestGroupedByDocumentId($where);
 
         if (!count($results)) {
             return response()->json([]);
@@ -223,27 +223,23 @@ class OFDataController extends ResourceController
     /**
      * @throws Exception
      */
+    public function showByDocumentId(string $documentId, Request $request): JsonResponse
+    {
+        /** @var OrbeonFormData $data */
+        $data = $this->repository->retrieveNewestByDocumentId($documentId);
+
+        return $this->returnShowResponse($data, $request);
+    }
+
+    /**
+     * @throws Exception
+     */
     public function show(int $id, Request $request): JsonResponse
     {
         /** @var OrbeonFormData $data */
         $data = $this->repository->find($id);
-        $verbose = $request->get("verbose", false);
-        $serializedDefinition = $this->representationService->getSerializedDefinition($data->app, $data->form);
 
-        $res = $this->representationService->toFormDataRepresentation(
-            $data,
-            $serializedDefinition,
-            $verbose
-        );
-
-        if ($request->get("withFormType", false)) {
-            $res["form_type"] = $this->modelConfigRepository->getFormDefinitionType(
-                $data->app,
-                $data->form
-            );
-        }
-
-        return response()->json(new OFDataResource($res));
+        return $this->returnShowResponse($data, $request);
     }
 
     public function destroy(int $id): JsonResponse
@@ -258,7 +254,7 @@ class OFDataController extends ResourceController
             //We also need to make sure that all records that have document_id
             //same as record that we seek to delete are deleted. That""s because
             //of audit that orbeon does. Form more info see OFDataRepository.php
-            //queryAndReturnNewestByDocumentId method.
+            //queryAndReturnNewestGroupedByDocumentId method.
             /** @var OrbeonFormData $recordToDel */
             $recordToDel = $this->repository->find($id);
             $formMeta = $this->controlTextRepository->getFormMeta($recordToDel->id);
@@ -295,5 +291,32 @@ class OFDataController extends ResourceController
         });
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function returnShowResponse(
+        OrbeonFormData $data,
+        Request        $request
+    ): JsonResponse
+    {
+        $verbose = $request->get("verbose", false);
+        $serializedDefinition = $this->representationService->getSerializedDefinition($data->app, $data->form);
+
+        $res = $this->representationService->toFormDataRepresentation(
+            $data,
+            $serializedDefinition,
+            $verbose
+        );
+
+        if ($request->get("withFormType", false)) {
+            $res["form_type"] = $this->modelConfigRepository->getFormDefinitionType(
+                $data->app,
+                $data->form
+            );
+        }
+
+        return response()->json(new OFDataResource($res));
     }
 }
