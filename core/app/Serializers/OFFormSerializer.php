@@ -12,11 +12,38 @@ use SimpleXMLElement;
 class OFFormSerializer
 {
     /**
+     * This method returns all form names that the given form is referencing through select controls.
+     *
+     * @param string $xmlString
+     * @return array
+     * @throws Exception
+     */
+    static function fromXmlDefinitionToRelatedForms(string $xmlString, string $app): array
+    {
+        $relatedForms = [];
+        $xml = OFFormSerializer::createSimpleXMLInstance($xmlString);
+        $nodes = $xml->xpath('//*[@resource]');
+
+        foreach ($nodes as $node) {
+            $resource = (string)$node['resource'];
+
+            if (str_starts_with($resource, 'http://' . config("app.internal_host") . '/api/of/data/' . $app)) {
+                $resourcePath = str_replace('http://' . config("app.internal_host") . '/api/of/data/' . $app, '', $resource);
+                $path = explode('/', $resourcePath, 2);
+
+                $relatedForms[] = $path[1];
+            }
+        }
+
+        return $relatedForms;
+    }
+
+    /**
      * Serializes XML form definition to JSON
      *
      * @throws Exception
      */
-    static function fromXmlToJsonControls(string $xmlString): array
+    static function fromXmlDefinitionToJsonControls(string $xmlString): array
     {
         $resources = OFFormSerializer::createSimpleXMLInstance($xmlString)->xpath('//resource');
 
@@ -57,7 +84,7 @@ class OFFormSerializer
     {
         $result = [];
 
-        OFFormSerializer::processNode(
+        OFFormSerializer::processXmlDataNode(
             OFFormSerializer::createSimpleXMLInstance($xmlString),
             $result
         );
@@ -65,11 +92,11 @@ class OFFormSerializer
         return $result;
     }
 
-    private static function processNode($node, &$result): void
+    private static function processXmlDataNode($node, &$result): void
     {
         foreach ($node as $key => $value) {
             if ($value->count() > 0) {
-                OFFormSerializer::processNode($value, $result);
+                OFFormSerializer::processXmlDataNode($value, $result);
             } else {
                 $result[(string)$key] = (string)$value;
             }

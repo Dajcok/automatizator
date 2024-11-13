@@ -31,7 +31,17 @@ abstract class Repository
 
     public function query(array $query)
     {
-        return $this->model->where($query)->get();
+        $queryBuilder = $this->model;
+
+        foreach ($query as $key => $value) {
+            if (is_array($value)) {
+                $queryBuilder = $queryBuilder->whereIn($key, $value);
+            } else {
+                $queryBuilder = $queryBuilder->where($key, $value);
+            }
+        }
+
+        return $queryBuilder->get();
     }
 
     public function find(int $id): Model

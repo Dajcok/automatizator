@@ -7,6 +7,7 @@ use App\Http\Controllers\ResourceController;
 use App\Http\Resources\Of\OFDefinitionCollection;
 use App\Http\Resources\Of\OFDefinitionResource;
 use App\Models\Of\OrbeonFormDefinition;
+use App\Repositories\Core\ModelConfigRepository;
 use App\Repositories\Of\OFDefinitionRepository;
 use App\Serializers\OFFormSerializer;
 use App\Services\OrbeonServiceContract;
@@ -22,8 +23,10 @@ readonly class OFDefinitionController
     public function __construct(
         private OFDefinitionRepository $repository,
         private OrbeonServiceContract  $service,
+        private ModelConfigRepository  $modelConfigRepository
     )
-    {}
+    {
+    }
 
     private function forwardCookies(Response $response, array $cookies): void
     {
@@ -136,7 +139,7 @@ readonly class OFDefinitionController
             throw new Exception("Form definition not found");
         }
 
-        $serializedDefinition = OFFormSerializer::fromXmlToJsonControls($definition[0]->xml);
+        $serializedDefinition = OFFormSerializer::fromXmlDefinitionToJsonControls($definition[0]->xml);
 
         return response()->json([
             "definition" => $serializedDefinition,
@@ -156,5 +159,45 @@ readonly class OFDefinitionController
         return response()->json([
             "message" => "Form definition deleted",
         ]);
+    }
+
+    /**
+     * This method retrieves all form names that are referencing through direct relation
+     * to the given form name.
+     *
+     * E.g. If form A has select control with references to the submissions of form B,
+     * then getRelatedTemplateFormNames for form B will return form A.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     */
+    public function getRelatedTemplateFormNames(Request $request): JsonResponse
+    {
+        $app = $request->route("app");
+        $form = $request->route("form");
+
+        $allTemplateFormNamesInApp = $this->modelConfigRepository->query([
+            "app_name" => $app,
+            "form_type" => "template",
+        ])->pluck("form_name");
+
+        $templateDefinitions = $this->repository->queryAndReturnNewest([
+            "app" => $app,
+            "form" => $allTemplateFormNamesInApp,
+        ], true);
+
+        $res = [];
+
+        foreach ($templateDefinitions as $templateDefinition) {
+            $relatedForms = OFFormSerializer::fromXmlDefinitionToRelatedForms($templateDefinition->xml, $app);
+
+            if (in_array($form, $relatedForms)) {
+                $res[] = $templateDefinition->form;
+            }
+        }
+
+
+        return response()->json(["data" => $res]);
     }
 }

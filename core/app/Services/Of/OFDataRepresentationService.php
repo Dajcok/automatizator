@@ -119,12 +119,6 @@ readonly class OFDataRepresentationService
             "form" => $form
         ]);
 
-        if (count($definition) === 0) {
-            return [];
-        }
-
-        $definition = $definition[0];
-
-        return OFFormSerializer::fromXmlToJsonControls($definition->xml);
+        return OFFormSerializer::fromXmlDefinitionToJsonControls($definition->xml);
     }
 }

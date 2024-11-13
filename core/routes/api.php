@@ -13,6 +13,7 @@ Route::prefix('api')->group(function () {
             Route::get('/{app}/new', [OFDefinitionController::class, 'newForm']);
             Route::get('/{app}/{form}/render', [OFDefinitionController::class, 'render']);
             Route::get('/{app}/{form}', [OFDefinitionController::class, 'show']);
+            Route::get('/{app}/{form}/related-templates', [OFDefinitionController::class, 'getRelatedTemplateFormNames']);
             Route::delete('/{app}/{form}', [OFDefinitionController::class, 'destroy']);
             Route::get('/{app}/{docId}/edit', [OFDefinitionController::class, 'editForm']);
             Route::get('/{app}/{form}/{docId}/edit', [OFDefinitionController::class, 'renderEdit']);

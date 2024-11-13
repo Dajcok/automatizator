@@ -63,15 +63,7 @@ class OFDataController extends ResourceController
             "form" => $form
         ]);
 
-        if (count($definition) === 0) {
-            return response()->json([
-                "message" => "Form definition not found"
-            ], 404);
-        }
-
-        $definition = $definition[0];
-
-        $controlsToLabels = OFFormSerializer::fromXmlToJsonControls($definition->xml);
+        $controlsToLabels = OFFormSerializer::fromXmlDefinitionToJsonControls($definition->xml);
         $dataWithControls = [];
         $currentSection = null;
 
