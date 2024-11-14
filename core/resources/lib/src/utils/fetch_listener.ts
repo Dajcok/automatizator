@@ -3,7 +3,7 @@ type RequestContext = {
 } & RequestInit;
 
 /**
- * Process all fetch requests before sending them from the client to the server.
+ * Process all fetch requests before sending them from the client to the server using monkey patching.
  *
  * RequestProcessor
  */
@@ -22,26 +22,39 @@ export class FetchListener {
 
         const fetch = window.fetch;
 
-        window.fetch = function (input: Request | URL | string, init?: RequestInit) {
+        window.fetch = async function (input: Request | URL | string, init?: RequestInit) {
             const url: string = input instanceof Request ? input.url : input.toString();
             let contextInit: RequestInit = init || {};
 
-            console.log('Request intercepted', {
-                url,
-                ...contextInit,
-            });
-
             const {url: mwResultUrl, ...mwResultInit} = middleware({url, ...contextInit});
-            console.log('Request processed', mwResultUrl, mwResultInit);
 
             if (input instanceof Request) {
-                return fetch(new Request(mwResultUrl, {
+                const response = await fetch(new Request(mwResultUrl, {
                     ...mwResultInit,
                     body: contextInit.body,
                 }));
+
+                //fetchCallbacks are one-time use
+                if (window.fetchCallbacks?.length) {
+                    window.fetchCallbacks.forEach((callback) => {
+                        callback({url, ...contextInit});
+                    });
+                    window.fetchCallbacks = [];
+                }
+
+                return response;
             }
 
-            return fetch(mwResultUrl, mwResultInit);
+            const response_1 = await fetch(mwResultUrl, mwResultInit);
+
+            if (window.fetchCallbacks?.length) {
+                window.fetchCallbacks.forEach((callback_1) => {
+                    callback_1({url, ...contextInit});
+                });
+                window.fetchCallbacks = [];
+            }
+
+            return response_1;
         };
     }
 }

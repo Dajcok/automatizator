@@ -9,6 +9,7 @@ declare global {
         fetchListener?: FetchListener;
         formRenderer?: FormRenderer;
         fetchListenerAttached?: boolean;
+        fetchCallbacks?: ((context: RequestContext) => void)[];
         formBuilderRenderer?: FormBuilderRenderer;
     }
 }

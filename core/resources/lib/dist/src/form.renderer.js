@@ -23,7 +23,6 @@ export class FormRenderer extends BaseRenderer {
             if (!els.length) {
                 console.warn(`No select found for control ${context.control}. Is the form mounted?`);
             }
-            ;
             const el = els[0];
             const optionToSelect = Array.from(el.options).find((option) => option.title === String(context.data));
             if (optionToSelect) {

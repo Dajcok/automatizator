@@ -23,7 +23,7 @@ export class FormRenderer extends BaseRenderer {
 
         if (!els.length) {
             console.warn(`No select found for control ${context.control}. Is the form mounted?`);
-        };
+        }
 
         const el = els[0] as HTMLSelectElement;
 
