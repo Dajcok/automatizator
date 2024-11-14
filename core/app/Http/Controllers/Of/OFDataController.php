@@ -309,6 +309,8 @@ class OFDataController extends ResourceController
             );
         }
 
+        $res["form_name"] = $data->form;
+
         return response()->json(new OFDataResource($res));
     }
 }

@@ -73,9 +73,22 @@ readonly class OFDefinitionController
         return $response;
     }
 
-    public function render(string $app, string $form): Application|Response|ResponseFactory
+    /**
+     * @param Request $request
+     * @return Application|Response|ResponseFactory
+     */
+    public function render(Request $request): Application|Response|ResponseFactory
     {
-        $data = $this->service->render($app, $form);
+        $app = $request->route("app");
+        $form = $request->route("form");
+
+        $context = $request->query("context", null);
+
+        if($context) {
+            $context = json_decode(base64_decode($context), true);
+        }
+
+        $data = $this->service->render($app, $form, null, $context);
 
         $response = response($data['html'])
             ->header('Content-Type', 'text/html');
@@ -192,12 +205,21 @@ readonly class OFDefinitionController
         foreach ($templateDefinitions as $templateDefinition) {
             $relatedForms = OFFormSerializer::fromXmlDefinitionToRelatedForms($templateDefinition->xml, $app);
 
-            if (in_array($form, $relatedForms)) {
-                $res[] = $templateDefinition->form;
+            if (in_array($form, array_column($relatedForms, "form"))) {
+                $result = array_values(array_filter($relatedForms, function($item) use ($form) {
+                    return $item["form"] === $form;
+                }))[0] ?? null;
+
+                if ($result) {
+                    $res[] = [
+                        "form" => $templateDefinition->form,
+                        "control" => $result["controlName"],
+                    ];
+                }
             }
         }
 
-
         return response()->json(["data" => $res]);
     }
+
 }

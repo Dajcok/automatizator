@@ -23,6 +23,13 @@ readonly class HTMLProcessor
         $this->xpath = new DOMXPath($this->dom);
     }
 
+    public function getElementByXPath(string $xpathExpression): ?DOMElement
+    {
+        $elements = $this->xpath->query($xpathExpression);
+
+        return $elements->length > 0 ? $elements->item(0) : null;
+    }
+
 
     public function getHTML(): string
     {

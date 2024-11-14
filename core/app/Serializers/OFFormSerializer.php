@@ -31,7 +31,10 @@ class OFFormSerializer
                 $resourcePath = str_replace('http://' . config("app.internal_host") . '/api/of/data/' . $app, '', $resource);
                 $path = explode('/', $resourcePath, 2);
 
-                $relatedForms[] = $path[1];
+                $relatedForms[] = [
+                    'controlName' => (string)$node['id'],
+                    'form' => $path[1],
+                ];
             }
         }
 

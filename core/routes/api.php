@@ -5,7 +5,6 @@ use App\Http\Controllers\Of\OFDataController;
 use App\Http\Controllers\Of\OFDefinitionController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::prefix('api')->group(function () {
     Route::prefix('of')->group(function () {
         Route::prefix('definition')->group(function () {

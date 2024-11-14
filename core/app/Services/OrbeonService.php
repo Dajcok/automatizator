@@ -9,11 +9,12 @@ use DOMException;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 
 interface OrbeonServiceContract
 {
     //Form definitions
-    public function render(string $app, string $form, string $docId): array;
+    public function render(string $app, string $form, string|null $docId, array|null $preselectContext): array;
 
     public function builder(string $app, string $docId): array;
 
@@ -104,12 +105,22 @@ readonly class OrbeonService implements OrbeonServiceContract
     /**
      * Rendering a form is done via a GET request to the /fr/{app}/{form}/new endpoint.
      *
-     * @param string $app
-     * @param string $form
+     * @param string      $app
+     * @param string      $form
+     * @param string|null $docId
+     * @param array{
+     *     data: string,
+     *     control: string,
+     * } | null        $preselectContext
+     *  - preselect context is needed so we can preselect values in the form's select controls
      * @return array<string, string>
      * @throws OrbeonException
      */
-    public function render(string $app, string $form, string $docId = null): array
+    public function render(string      $app,
+                           string      $form,
+                           string|null $docId = null,
+                           array       $preselectContext = null
+    ): array
     {
         try {
             $config = [
@@ -123,13 +134,51 @@ readonly class OrbeonService implements OrbeonServiceContract
                 ]
             ];
 
-            if(!$docId) {
+            if (!$docId) {
                 $response = $this->client->request('GET', "/orbeon/fr/$app/$form/new", $config);
             } else {
                 $response = $this->client->request('GET', "/orbeon/fr/$app/$form/edit/$docId", $config);
             }
 
             $htmlProcessor = new HTMLProcessor($response->getBody()->getContents());
+
+            if ($preselectContext) {
+                [
+                    'uuid' => $uuid,
+                    'jsessionId' => $jsessionId
+                ] = $this->getGetSessionContextFromHtml($htmlProcessor, $response);
+
+                $selectElement = $htmlProcessor->getElementByXPath("//select[contains(@id, '{$preselectContext['control']}')]");
+
+                if (!$selectElement) {
+                    throw new OrbeonException("Select element with control ID '{$preselectContext['control']}' not found.");
+                }
+
+                $selectName = $selectElement->getAttribute('name');
+
+                $options = $selectElement->getElementsByTagName('option');
+                $value = null;
+
+                foreach ($options as $option) {
+                    if ($option instanceof DOMElement && $option->getAttribute('title') == $preselectContext['data']) {
+                        $value = $option->getAttribute('value');
+                        break;
+                    }
+                }
+
+                if ($value === null) {
+                    throw new OrbeonException("Option with title '{$preselectContext['data']}' not found.");
+                }
+
+
+                $this->submitFormValue(
+                    $jsessionId,
+                    $selectName,
+                    $value,
+                    $uuid
+                );
+            }
+
 
             $htmlProcessor->removeElementsByClassName('fr-orbeon-version');
             $htmlProcessor->removeElementsByClassName('fr-pdf-button');
@@ -166,7 +215,7 @@ readonly class OrbeonService implements OrbeonServiceContract
             $isNewForm = $docId === null;
 
             //If we are requesting to edit existing form
-            if(!$isNewForm) {
+            if (!$isNewForm) {
                 $response = $this->client->request('GET', "/orbeon/fr/orbeon/builder/edit/$docId", $reqConfig);
             } else {
                 $response = $this->client->request('GET', "/orbeon/fr/orbeon/builder/new", $reqConfig);
@@ -176,12 +225,11 @@ readonly class OrbeonService implements OrbeonServiceContract
             $htmlProcessor->removeElementsByClassName('fr-orbeon-version');
 
             //We want to preset values only for new forms
-            if($isNewForm) {
-                $uuid = $this->getSessionUUIDForBuilder($htmlProcessor);
-
-                $sessionCookie = $response->getHeader('Set-Cookie')[0];
-                $parts = explode(';', $sessionCookie);
-                $jsessionId = explode('=', $parts[0])[1];
+            if ($isNewForm) {
+                [
+                    'uuid' => $uuid,
+                    'jsessionId' => $jsessionId
+                ] = $this->getGetSessionContextFromHtml($htmlProcessor, $response);
 
                 $this->submitFormValue(
                     $jsessionId,
@@ -340,12 +388,12 @@ readonly class OrbeonService implements OrbeonServiceContract
 
     /**
      * This method extracts the session UUID from the script element that
-     * contains the dynamic script for the form builder.
+     * contains the dynamic script for the form builder/runner.
      *
      * @param HTMLProcessor $el
      * @return string|null
      */
-    private function getSessionUUIDForBuilder(
+    private function getSessionUUID(
         HTMLProcessor $htmlProcessor,
     ): string|null
     {
@@ -360,6 +408,27 @@ readonly class OrbeonService implements OrbeonServiceContract
         }
 
         return $uuid;
+    }
+
+    /**
+     * @param HTMLProcessor     $htmlProcessor
+     *  - with loaded HTML from response
+     * @param ResponseInterface $response
+     *  - direct response from Orbeon Forms
+     * @return array
+     */
+    private function getGetSessionContextFromHtml(HTMLProcessor $htmlProcessor, ResponseInterface $response): array
+    {
+        $uuid = $this->getSessionUUID($htmlProcessor);
+
+        $sessionCookie = $response->getHeader('Set-Cookie')[0];
+        $parts = explode(';', $sessionCookie);
+        $jsessionId = explode('=', $parts[0])[1];
+
+        return [
+            'uuid' => $uuid,
+            'jsessionId' => $jsessionId
+        ];
     }
 }
 

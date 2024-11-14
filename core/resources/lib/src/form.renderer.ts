@@ -12,4 +12,27 @@ export class FormRenderer extends BaseRenderer {
             container.classList.add('yui-skin-sam');
         });
     }
+
+    public async submitControl(
+        context: {
+            control: string;
+            data: number | string;
+        },
+    ) {
+        const els = document.querySelectorAll(`select[id*="${context.control}"]`);
+
+        if (!els.length) {
+            console.warn(`No select found for control ${context.control}. Is the form mounted?`);
+        };
+
+        const el = els[0] as HTMLSelectElement;
+
+        const optionToSelect = Array.from(el.options).find(
+            (option) => option.title === String(context.data)
+        ) as HTMLOptionElement;
+
+        if (optionToSelect) {
+            optionToSelect.selected = true;
+        }
+    }
 }
