@@ -4,6 +4,7 @@ use App\Http\Controllers\Core\ModelConfigController;
 use App\Http\Controllers\Of\OFDataController;
 use App\Http\Controllers\Of\OFDefinitionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Acl\AclController;
 
 Route::prefix('api')->group(function () {
     Route::prefix('of')->group(function () {
@@ -26,6 +27,10 @@ Route::prefix('api')->group(function () {
             Route::get('/{id}', [OFDataController::class, 'show']);
             Route::post('/{app}/{form}', [OFDataController::class, 'store']);
         });
+    });
+
+    Route::prefix("acl")->group(function () {
+       Route::post("/migrate/{integrationName}", [AclController::class, "migrate"]);
     });
 
     Route::prefix("core")->group(function () {
