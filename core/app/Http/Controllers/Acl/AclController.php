@@ -7,11 +7,11 @@ use Illuminate\Http\JsonResponse;
 use App\Repositories\Of\OFDataRepository;
 use App\Integration\Acl\Hr\HRTransactionManager;
 
-class AclController
+readonly class AclController
 {
     public function __construct(
-        private readonly OFDataRepository $repository,
-        private readonly OrbeonICurrentRepository $orbeonICurrentRepository,
+        private OFDataRepository         $repository,
+        private OrbeonICurrentRepository $orbeonICurrentRepository,
     )
     {}
 

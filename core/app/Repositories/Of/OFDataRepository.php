@@ -19,13 +19,18 @@ class OFDataRepository extends Repository
      *
      * It's grouped by document_id
      *
-     * @param array $query Contains the document_id to filter by.
+     * @param string $app The application name.
+     * @param string $form The form name.
+     * @param array $xmlFilters Contains strings that are applied to the XML filters as substring matches.
      * @return mixed The latest OrbeonFormData entry for the given document_id.
      */
-    public function queryAndReturnNewestGroupedByDocumentId(array $query): mixed
+    public function queryAndReturnNewestGroupedByDocumentId(string $app, string $form, array $xmlFilters = []): mixed
     {
-        return $this->model
-            ->where($query)
+        $builder = $this->model
+            ->where([
+                'app' => $app,
+                'form' => $form
+            ])
             ->where('deleted', '!=', '1')
             ->select('orbeon_form_data.*')
             ->joinSub(
@@ -36,8 +41,16 @@ class OFDataRepository extends Repository
                     $join->on('orbeon_form_data.document_id', '=', 'latest.document_id')
                         ->on('orbeon_form_data.last_modified_time', '=', 'latest.max_modified');
                 }
-            )
-            ->get();
+            );
+
+        foreach ($xmlFilters as $nodePath => $val) {
+            $builder->whereRaw(
+                "(xpath('/form/$nodePath/text()', orbeon_form_data.xml::xml, ARRAY[ARRAY['fr', 'http://orbeon.org/oxf/xml/form-runner']]))[1]::TEXT LIKE ?",
+                ["%$val%"]
+            );
+        }
+
+        return $builder->get();
     }
 
     public function retrieveNewestByDocumentId(string $documentId): mixed

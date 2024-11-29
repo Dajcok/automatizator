@@ -125,6 +125,16 @@ class OFDataController extends ResourceController
         //Verbose is used to determine whether we should return control labels(if true) or control ids
         $verbose = $request->get("verbose", false);
 
+        $queryParams = $request->query();
+
+        $xmlFilters = [];
+        foreach ($queryParams as $key => $value) {
+            //every query param that is not "verbose" is considered as an xml filter
+            if (!str_contains($key, "verbose")) {
+                $xmlFilters[$key] = $value;
+            }
+        }
+
         /**
          * In orbeon both form builder data and submitted form data are stored in orbeon_form_data table.
          * This Indicates whether we are retrieving form builder data or data of submitted forms
@@ -150,12 +160,6 @@ class OFDataController extends ResourceController
             $app = "orbeon";
             $form = "builder";
         }
-
-        //Used to query both orbeon_form_data and orbeon_form_definition tables
-        $where = [
-            "app" => $app,
-            "form" => $form
-        ];
 
         if ($retrievingFormBuilderData) {
             if (!$parentApp) {
@@ -186,7 +190,7 @@ class OFDataController extends ResourceController
 
         $serializedDefinition = $this->representationService->getSerializedDefinition($app, $form);
 
-        $results = $this->repository->queryAndReturnNewestGroupedByDocumentId($where);
+        $results = $this->repository->queryAndReturnNewestGroupedByDocumentId($app, $form, $xmlFilters);
 
         if (!count($results)) {
             return response()->json([]);
