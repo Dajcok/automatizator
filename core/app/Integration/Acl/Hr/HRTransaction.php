@@ -33,6 +33,7 @@ class HRTransaction extends ACLTransaction
     {
         $pohlavie = str_contains($row[5], "ž") ? "W" : "M";
 
+        //TODO: Doplniť všetky controls a sections, aj ked tam bude null
         return [
             "section-1" => [
                 "control-1" => $row[2],

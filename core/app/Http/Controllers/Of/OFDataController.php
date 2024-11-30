@@ -63,18 +63,21 @@ class OFDataController extends ResourceController
             "form" => $form
         ]);
 
-        $controlsToLabels = OFFormSerializer::fromXmlDefinitionToJsonControls($definition->xml);
+        $controlsToLabels = OFFormSerializer::fromXmlDefinitionToJsonControls($definition->xml, true);
+
         $dataWithControls = [];
-        $currentSection = null;
 
-        foreach ($controlsToLabels as $key => $field) {
-            if (str_contains($key, "section")) {
-                $currentSection = $key;
-                $dataWithControls[$currentSection] = [];
-                continue;
+        foreach ($controlsToLabels as $section => $controls) {
+            $dataWithControls[$section] = [];
+
+            foreach ($controls as $key => $label) {
+                if(!isset($body[LabelToKey::convert($label)])) {
+                    $dataWithControls[$section][$key] = null;
+                    continue;
+                }
+
+                $dataWithControls[$section][$key] = $body[LabelToKey::convert($label)];
             }
-
-            $dataWithControls[$currentSection][$key] = $body[LabelToKey::convert($field)];
         }
 
         $submissionReadyXml = OFFormSerializer::fromArrayToXmlSubmission($dataWithControls);
@@ -110,7 +113,8 @@ class OFDataController extends ResourceController
 
         return response()
             ->json([
-                "message" => "Submission created"
+                "message" => "Submission created",
+                "document_id" => $documentId
             ], 201);
     }
 

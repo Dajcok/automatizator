@@ -45,7 +45,7 @@ class OFDataRepository extends Repository
 
         foreach ($xmlFilters as $nodePath => $val) {
             $builder->whereRaw(
-                "(xpath('/form/$nodePath/text()', orbeon_form_data.xml::xml, ARRAY[ARRAY['fr', 'http://orbeon.org/oxf/xml/form-runner']]))[1]::TEXT LIKE ?",
+                "(xpath('/form/$nodePath/text()', orbeon_form_data.xml::xml, ARRAY[ARRAY['fr', 'http://orbeon.org/oxf/xml/form-runner']]))[1]::TEXT ILIKE ?",
                 ["%$val%"]
             );
         }

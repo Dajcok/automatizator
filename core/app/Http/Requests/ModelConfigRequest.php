@@ -27,6 +27,7 @@ class ModelConfigRequest extends FormRequest
             'form_name' => 'required|string',
             'app_name' => 'required|string',
             'form_type' => 'string|in:domain,template',
+            'filter_config' => 'json',
         ];
     }
 }

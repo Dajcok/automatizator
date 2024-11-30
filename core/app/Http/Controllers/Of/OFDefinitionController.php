@@ -11,6 +11,7 @@ use App\Repositories\Core\ModelConfigRepository;
 use App\Repositories\Of\OFDefinitionRepository;
 use App\Serializers\OFFormSerializer;
 use App\Services\OrbeonServiceContract;
+use App\Utils\LabelToKey;
 use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Foundation\Application;
@@ -142,17 +143,14 @@ readonly class OFDefinitionController
     {
         $app = $request->route("app");
         $form = $request->route("form");
+        $withSectios = $request->get("withSections", false);
 
-        $definition = $this->repository->query([
+        $definition = $this->repository->queryAndReturnNewest([
             "app" => $app,
-            "form" => $form,
+            "form" => $form
         ]);
 
-        if (!count($definition)) {
-            throw new Exception("Form definition not found");
-        }
-
-        $serializedDefinition = OFFormSerializer::fromXmlDefinitionToJsonControls($definition[0]->xml);
+        $serializedDefinition = OFFormSerializer::fromXmlDefinitionToJsonControls($definition->xml, $withSectios);
 
         return response()->json([
             "definition" => $serializedDefinition,

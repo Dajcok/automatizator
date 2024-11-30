@@ -6,6 +6,7 @@ use Exception;
 use SimpleXMLElement;
 
 /**
+ * TODO: Refactor this class to use the new XML parser DOMDocument
  * This class is used to serialize data coming from orbeon_form_data table and orbeon_form_data_attach table
  * We use it to properly display form submissions on the frontend and to further process the data e.g. for exporting
  */
@@ -46,20 +47,68 @@ class OFFormSerializer
      *
      * @throws Exception
      */
-    static function fromXmlDefinitionToJsonControls(string $xmlString): array
+    static function fromXmlDefinitionToJsonControls(string $xmlString, bool $withSections = false): array
     {
         $resources = OFFormSerializer::createSimpleXMLInstance($xmlString)->xpath('//resource');
 
+        if (count($resources) === 0) {
+            throw new Exception('No resources found in XML');
+        }
+
+        $resources = $resources[0];
+
+        if ($withSections) {
+            $sectionDefinitions = OFFormSerializer::createSimpleXMLInstance($xmlString)->xpath('//form');
+
+            if (count($sectionDefinitions) === 0) {
+                throw new Exception('No form definition found in XML');
+            }
+
+            $sectionDefinitions = $sectionDefinitions[0];
+
+            foreach ($sectionDefinitions->children() as $section) {
+                foreach ($section->children() as $index => $grid) {
+                    if (str_starts_with($grid->getName(), 'grid-')) {
+                        foreach ($grid->children() as $control) {
+                            $section->addChild($control->getName(), (string)$control);
+                        }
+                    }
+                }
+            }
+        }
+
         $result = [];
 
-        foreach ($resources as $resource) {
-            foreach ($resource as $control) {
-                $controlId = (string)$control->getName();
-                $label = (string)$control->label;
+        foreach ($resources as $control) {
+            $controlId = (string)$control->getName();
+            if(str_starts_with($controlId, 'section')) {
+                continue;
+            }
+            $label = (string)$control->label;
 
-                if (!empty($label)) {
-                    $result[$controlId] = $label;
+            $section = null;
+            if ($withSections) {
+                foreach ($sectionDefinitions->children() as $potentialSection) {
+                    foreach ($potentialSection->children() as $child) {
+                        if ($child->getName() === $controlId) {
+                            $section = $potentialSection;
+                            break 2;
+                        }
+                    }
                 }
+            }
+
+            $append = &$result;
+            if ($section && $withSections) {
+                $sectionName = (string)$section->getName();
+                if (!isset($result[$sectionName]) || !is_array($result[$sectionName])) {
+                    $result[$sectionName] = [];
+                }
+                $append = &$result[$sectionName];
+            }
+
+            if (!empty($label)) {
+                $append[$controlId] = $label;
             }
         }
 
@@ -71,11 +120,19 @@ class OFFormSerializer
      */
     private static function createSimpleXMLInstance(string $xmlString): SimpleXMLElement
     {
+        libxml_use_internal_errors(true);
         try {
-            return new SimpleXMLElement($xmlString);
+            $xml = new SimpleXMLElement($xmlString);
         } catch (Exception $e) {
-            throw new Exception('Error while loading XML: ' . $e->getMessage());
+            $errors = libxml_get_errors();
+            $errorMessage = 'Error while loading XML: ' . $e->getMessage();
+            foreach ($errors as $error) {
+                $errorMessage .= "\n" . trim($error->message);
+            }
+            libxml_clear_errors();
+            throw new Exception($errorMessage);
         }
+        return $xml;
     }
 
     /**

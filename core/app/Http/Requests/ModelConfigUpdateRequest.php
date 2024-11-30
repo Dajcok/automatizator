@@ -23,8 +23,9 @@ class ModelConfigUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'column_config' => 'required|json',
+            'column_config' => 'json',
             'form_type' => 'string|in:domain,template',
+            'filter_config' => 'json',
         ];
     }
 }
