@@ -38,6 +38,7 @@ interface OrbeonServiceContract
 readonly class OrbeonService implements OrbeonServiceContract
 {
     public function __construct(
+        //BaseURL is defined in the service provider file
         private Client $client
     )
     {
@@ -178,7 +179,6 @@ readonly class OrbeonService implements OrbeonServiceContract
                     $uuid
                 );
             }
-
 
             $htmlProcessor->removeElementsByClassName('fr-orbeon-version');
             $htmlProcessor->removeElementsByClassName('fr-pdf-button');

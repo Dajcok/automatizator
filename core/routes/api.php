@@ -1,12 +1,14 @@
 <?php
 
+use App\Http\Controllers\Acl\AclController;
 use App\Http\Controllers\Core\ModelConfigController;
+use App\Http\Controllers\Core\SubmissionController;
 use App\Http\Controllers\Of\OFDataController;
 use App\Http\Controllers\Of\OFDefinitionController;
+use App\Http\Controllers\Of\OrbeonProxyController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Acl\AclController;
 
-Route::prefix('api')->group(function () {
+Route::withoutMiddleware([\Illuminate\Session\Middleware\StartSession::class])->prefix('api')->group(function () {
     Route::prefix('of')->group(function () {
         Route::prefix('definition')->group(function () {
             Route::get('/{app}', [OFDefinitionController::class, 'index']);
@@ -42,5 +44,16 @@ Route::prefix('api')->group(function () {
             Route::put("/{id}", [ModelConfigController::class, "update"]);
             Route::delete("/{id}", [ModelConfigController::class, "destroy"]);
         });
+
+        Route::prefix("submissions")->group(function () {
+            Route::put("/{documentId}", [SubmissionController::class, "update"]);
+        });
     });
+});
+
+Route::prefix('orbeon')->group(function () {
+    Route::get('/{path}', [OrbeonProxyController::class, 'get'])
+        ->where('path', '.*');
+    Route::post('/{path}', [OrbeonProxyController::class, 'post'])
+        ->where('path', '.*');
 });

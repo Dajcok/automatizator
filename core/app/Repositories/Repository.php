@@ -44,7 +44,7 @@ abstract class Repository
         return $queryBuilder->get();
     }
 
-    public function find(int $id): Model
+    public function find(mixed $id): Model
     {
         return $this->model->findOrFail($id);
     }

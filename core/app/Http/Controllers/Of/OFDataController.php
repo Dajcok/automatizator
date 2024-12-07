@@ -8,8 +8,10 @@ use App\Http\Resources\Of\OFBuilderDataCollection;
 use App\Http\Resources\Of\OFBuilderDataResource;
 use App\Http\Resources\Of\OFDataCollection;
 use App\Http\Resources\Of\OFDataResource;
+use App\Models\Core\Submission;
 use App\Models\Of\OrbeonFormData;
 use App\Repositories\Core\ModelConfigRepository;
+use App\Repositories\Core\SubmissionRepository;
 use App\Repositories\Of\OFDataRepository;
 use App\Repositories\Of\OFDefinitionRepository;
 use App\Repositories\Of\OrbeonIControlTextRepository;
@@ -41,6 +43,7 @@ class OFDataController extends ResourceController
         private readonly OrbeonIControlTextRepository $controlTextRepository,
         private readonly OrbeonICurrentRepository     $orbeonICurrentRepository,
         private readonly ModelConfigRepository        $modelConfigRepository,
+        private readonly SubmissionRepository         $submissionRepository,
 
         private readonly OFDataRepresentationService  $representationService
     )
@@ -71,7 +74,7 @@ class OFDataController extends ResourceController
             $dataWithControls[$section] = [];
 
             foreach ($controls as $key => $label) {
-                if(!isset($body[LabelToKey::convert($label)])) {
+                if (!isset($body[LabelToKey::convert($label)])) {
                     $dataWithControls[$section][$key] = null;
                     continue;
                 }
@@ -209,6 +212,16 @@ class OFDataController extends ResourceController
                 $verbose,
                 $isOrbeonFetching
             );
+
+            try {
+                /** @var Submission $submissionMetaData */
+                $submissionMetaData = $this->submissionRepository->find($result->document_id);
+                $res['generated_documents'] = $submissionMetaData->generated_documents;
+            } catch (Exception $e) {
+                logger()->info("Submission meta data not found for " . $result->document_id);
+                $res["generated_documents"] = [];
+            }
+
             $jsonSerialized[] = $res;
         }
 
