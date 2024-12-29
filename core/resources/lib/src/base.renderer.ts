@@ -4,6 +4,7 @@ import {translate} from "./translate";
 export abstract class BaseRenderer {
     protected newScriptEls: HTMLScriptElement[] = [];
     protected newLinkEls: HTMLLinkElement[] = [];
+    private authToken: string | null = null;
 
     constructor(
         protected readonly axios: AxiosInstance,
@@ -140,9 +141,14 @@ export abstract class BaseRenderer {
      * @param beforeRenderCb
      */
     public async render(container: HTMLElement, pageUrl: string, beforeRenderCb?: (container: HTMLElement) => void): Promise<void> {
+        if(!this.authToken) {
+            throw new Error('No auth token provided. You need to call authenticate method first');
+        }
+
         const response = await this.axios.get(pageUrl, {
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': this.authToken,
             }
         }).catch((e: any) => {
             console.error('Error fetching form', e);
@@ -187,5 +193,9 @@ export abstract class BaseRenderer {
 
         this.newScriptEls = [];
         this.newLinkEls = [];
+    }
+
+    public authenticate(authToken: string | null) {
+        this.authToken = authToken;
     }
 }

@@ -124,7 +124,7 @@ return [
     ],
 
     /*
-     *  URL where the application is hosted outside the container
+     *  URL where the application is accessible locally within docker network
      */
-    'internal_host' => 'host.docker.internal:8001'
+    'service_url' => 'host.docker.internal:8001'
 ];

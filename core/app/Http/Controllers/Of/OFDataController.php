@@ -189,7 +189,7 @@ class OFDataController extends ResourceController
         }
 
         //We use internal host to determine whether Orbeon is fetching data from our core api
-        $isOrbeonFetching = $request->headers->get("Host") === config("app.internal_host");
+        $isOrbeonFetching = $request->headers->get("Host") === config("app.service_url");
 
         if ($isOrbeonFetching) {
             $verbose = true;
@@ -284,6 +284,7 @@ class OFDataController extends ResourceController
                         "app" => $formMeta["app_name"],
                         "form" => $formMeta["form_name"],
                     ]);
+
                     $this->modelConfigRepository->deleteWhere([
                         "app_name" => $formMeta["app_name"],
                         "form_name" => $formMeta["form_name"],
@@ -293,6 +294,7 @@ class OFDataController extends ResourceController
                         "app" => $formMeta["app_name"],
                         "form" => $formMeta["form_name"],
                     ]);
+
                     foreach ($dataToDelete as $data) {
                         $this->controlTextRepository->deleteWhere(["data_id" => $data->id]);
                         $this->orbeonICurrentRepository->deleteWhere(["data_id" => $data->id]);

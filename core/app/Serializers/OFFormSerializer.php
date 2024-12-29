@@ -28,8 +28,8 @@ class OFFormSerializer
         foreach ($nodes as $node) {
             $resource = (string)$node['resource'];
 
-            if (str_starts_with($resource, 'http://' . config("app.internal_host") . '/api/of/data/' . $app)) {
-                $resourcePath = str_replace('http://' . config("app.internal_host") . '/api/of/data/' . $app, '', $resource);
+            if (str_starts_with($resource, 'http://' . config("app.service_url") . '/api/of/data/' . $app)) {
+                $resourcePath = str_replace('http://' . config("app.service_url") . '/api/of/data/' . $app, '', $resource);
                 $path = explode('/', $resourcePath, 2);
 
                 $relatedForms[] = [

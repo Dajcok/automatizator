@@ -9,6 +9,7 @@ window.fetchListener = new FetchListener((context) => {
     if (context.url.startsWith('/')) {
         context.url = CORE_URL + context.url;
     }
+    context.headers = Object.assign(Object.assign({}, context.headers), { 'Cache-Control': 'default', 'Pragma': 'public' });
     return context;
 });
 const _axios = axios.create({

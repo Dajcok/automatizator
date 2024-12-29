@@ -14,6 +14,12 @@ window.fetchListener = new FetchListener(
             context.url = CORE_URL + context.url;
         }
 
+        context.headers = {
+            ...context.headers,
+            'Cache-Control': 'default',
+            'Pragma': 'public',
+        };
+
         return context;
     },
 );

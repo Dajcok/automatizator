@@ -14,6 +14,7 @@ export class BaseRenderer {
         this.proxyUrl = proxyUrl;
         this.newScriptEls = [];
         this.newLinkEls = [];
+        this.authToken = null;
         if (!axios.defaults.baseURL) {
             throw new Error('axios baseURL is not defined');
         }
@@ -122,9 +123,13 @@ export class BaseRenderer {
      */
     render(container, pageUrl, beforeRenderCb) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (!this.authToken) {
+                throw new Error('No auth token provided. You need to call authenticate method first');
+            }
             const response = yield this.axios.get(pageUrl, {
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': this.authToken,
                 }
             }).catch((e) => {
                 console.error('Error fetching form', e);
@@ -162,5 +167,8 @@ export class BaseRenderer {
         });
         this.newScriptEls = [];
         this.newLinkEls = [];
+    }
+    authenticate(authToken) {
+        this.authToken = authToken;
     }
 }
