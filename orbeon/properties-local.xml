@@ -51,4 +51,34 @@
             name="oxf.fr.authentication.header.credentials"
             value="Orbeon-Credentials"
     />
+
+
+    <!-- Enable production mode -->
+    <property as="xs:string" name="oxf.run.mode">prod</property>
+
+    <!-- Enable caching for performance -->
+    <property as="xs:boolean" name="oxf.xforms.cache">true</property>
+    <property as="xs:boolean" name="oxf.xforms.cache.data">true</property>
+
+    <!-- Disable debug options -->
+    <property as="xs:boolean" name="oxf.xforms.debugger">false</property>
+    <property as="xs:boolean" name="oxf.xforms.show-source">false</property>
+    <property as="xs:boolean" name="oxf.xforms.show-log">false</property>
+
+    <!-- Restrict access to sensitive resources -->
+    <property as="xs:string" name="oxf.fr.authentication.method">container</property>
+    <property as="xs:boolean" name="oxf.fr.authentication.user.save-password">false</property>
+
+    <!-- Log configuration -->
+    <property as="xs:string" name="oxf.logging.config">/usr/local/tomcat/webapps/orbeon/WEB-INF/log4j-prod.xml</property>
+
+    <!-- Other performance settings -->
+    <property as="xs:boolean" name="oxf.xforms.xhtml.output.pretty">false</property>
+    <property as="xs:boolean" name="oxf.xforms.ajax.enable">true</property>
+
+    <!-- Security enhancements -->
+    <property as="xs:boolean" name="oxf.xforms.csrf.protection">true</property>
+
+
+    <property as="xs:string" name="oxf.log.level" value="ERROR"/>
 </properties>

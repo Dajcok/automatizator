@@ -40,7 +40,7 @@
     <!--Set run mode ("dev" or "prod")-->
     <context-param>
         <param-name>oxf.run-mode</param-name>
-        <param-value>dev</param-value>
+        <param-value>prod</param-value>
     </context-param>
     <!--Set location of properties.xml-->
     <context-param>

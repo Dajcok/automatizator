@@ -34,6 +34,9 @@ export class BaseRenderer {
             else if (originalUrl.startsWith('http://localhost')) {
                 originalUrl = originalUrl.substring(21);
             }
+            else if (originalUrl.startsWith('https://business-idocs.web.app')) {
+                originalUrl = originalUrl.substring(30);
+            }
             if (!this.proxyUrl) {
                 return this.axios.defaults.baseURL + originalUrl;
             }

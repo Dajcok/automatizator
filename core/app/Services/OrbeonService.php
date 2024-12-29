@@ -311,8 +311,9 @@ readonly class OrbeonService implements OrbeonServiceContract
 
             return [
                 'content' => $response->getBody()->getContents(),
-                'content-type' => $response->getHeader('Content-Type')
-            ];
+                'content-type' => $response->getHeader('Content-Type'),
+	    	'content-encoding' => $response->getHeader('Content-Encoding')
+	    ];
         } catch (GuzzleException $e) {
             throw OrbeonException::fromHttpStatusCode($e->getCode())->withDetail($e->getMessage());
         }

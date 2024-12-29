@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:8081'],
+    'allowed_origins' => ['http://localhost:8081', 'https://business-idocs.web.app'],
 
     'allowed_origins_patterns' => [],
 

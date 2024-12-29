@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(OrbeonServiceContract::class, OrbeonService::class);
 
-        $baseUrl = env('ORBEON_BASE_URL', 'http://localhost:8080');
+        $baseUrl = env('ORBEON_BASE_URL', 'http://172.23.0.9:8080');
         $this->app->singleton(Client::class, function () use ($baseUrl) {
             return new Client([
                 'base_uri' => $baseUrl,

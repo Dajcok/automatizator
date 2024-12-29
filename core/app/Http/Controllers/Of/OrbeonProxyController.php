@@ -20,7 +20,9 @@ class OrbeonProxyController extends Controller
             $resource = $this->service->getResource($path, request()->cookie('JSESSIONID', ''));
 
             return response($resource['content'])
-                ->header('Content-Type', $resource['content-type']);
+		    ->header('Content-Type', $resource['content-type'])
+		    ->header('Content-Encoding', $resource['content-encoding'])
+	    	    ->header('Cache-Control', 'public, max-age=31536000, immutable');
         } catch (OrbeonException $e) {
             return response($e->getMessage(), $e->getCode());
         }

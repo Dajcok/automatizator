@@ -1,5 +1,6 @@
 #!/bin/bash
 
-catalina.sh run &
+export JAVA_OPTS="$JAVA_OPTS"
+exec catalina.sh run &
 
 tail -f /usr/local/logs/orbeon.log

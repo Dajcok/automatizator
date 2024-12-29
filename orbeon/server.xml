@@ -63,9 +63,10 @@
 
                 username="orbeon"
                 password="orbeon_password"
-                url="jdbc:postgresql://postgres_orbeon:5432/orbeon?useUnicode=true&amp;characterEncoding=UTF8&amp;socketTimeout=30&amp;tcpKeepAlive=true"
+		url="jdbc:postgresql://172.23.0.10:5432/orbeon?useUnicode=true&amp;characterEncoding=UTF8&amp;socketTimeout=30&amp;tcpKeepAlive=true"
         />
-    </GlobalNamingResources>
+</GlobalNamingResources>
+
 
     <!-- A "Service" is a collection of one or more "Connectors" that share
          a single "Container" Note:  A "Service" is not itself a "Container",
@@ -75,10 +76,9 @@
     <Service name="Catalina">
 
         <!--The connectors can use a shared executor, you can define one or more named thread pools-->
-        <!--
-        <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
-            maxThreads="150" minSpareThreads="4"/>
-        -->
+        
+	<Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+            maxThreads="10" minSpareThreads="4"/>
 
 
         <!-- A "Connector" represents an endpoint by which requests are received
@@ -89,7 +89,9 @@
         -->
         <Connector port="8080" protocol="HTTP/1.1"
                    connectionTimeout="20000"
-                   redirectPort="8443"/>
+		   redirectPort="8443"
+		   enableLookups="false"
+		/>
         <!-- A "Connector" using the shared thread pool-->
         <!--
         <Connector executor="tomcatThreadPool"
