@@ -195,7 +195,13 @@ export abstract class BaseRenderer {
         this.newLinkEls = [];
     }
 
-    public authenticate(authToken: string | null) {
+    public authenticate(authToken: string) {
+        if(!authToken) {
+            throw new Error('No auth token provided');
+        }
+
         this.authToken = authToken;
+
+        console.log('Auth token set');
     }
 }
