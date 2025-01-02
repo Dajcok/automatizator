@@ -172,6 +172,10 @@ export class BaseRenderer {
         this.newLinkEls = [];
     }
     authenticate(authToken) {
+        if (!authToken) {
+            throw new Error('No auth token provided');
+        }
         this.authToken = authToken;
+        console.log('Auth token set');
     }
 }

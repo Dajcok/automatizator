@@ -126,5 +126,5 @@ return [
     /*
      *  URL where the application is accessible locally within docker network
      */
-    'service_url' => 'host.docker.internal:8001'
+    'service_url' => '172.23.0.11:8001'
 ];
