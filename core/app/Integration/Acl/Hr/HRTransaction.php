@@ -60,7 +60,8 @@ class HRTransaction extends ACLTransaction
                 "control-14" => $row[14],
             ],
             "section-7" => [
-                "control-33" => $row[25],
+                "control-25" => $row[19],
+                "control-33" => $row[30],
             ],
         ];
     }
