@@ -21,6 +21,7 @@ class SubcontractorShard extends ACLShard__Orbeon
             "hr",
             "subcontractor",
             $row,
+            //TODO: validuj fieldls podla sekcie
             [
                 'control-1',
                 'control-2',

@@ -4,6 +4,7 @@ import { FetchListener } from "./src/utils/fetch_listener";
 import { loadStyle } from "./src/utils/loader";
 import { FormBuilderRenderer } from "./src/form_builder.renderer";
 const CORE_URL = "http://localhost:8001";
+// const CORE_URL = "https://idocs2.klimekdeveloper.sk/services/core";
 loadStyle(CORE_URL + '/css/core.css');
 window.fetchListener = new FetchListener((context) => {
     if (context.url.startsWith('/')) {
