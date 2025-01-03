@@ -200,7 +200,9 @@ class OFDataController extends ResourceController
         $results = $this->repository->queryAndReturnNewestGroupedByDocumentId($app, $form, $xmlFilters);
 
         if (!count($results)) {
-            return response()->json([]);
+            return response()->json([
+                "data" => [],
+            ]);
         }
 
         $jsonSerialized = [];
